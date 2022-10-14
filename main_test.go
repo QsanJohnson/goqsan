@@ -18,7 +18,7 @@ type testConfig struct {
 	ip       string
 	user     string
 	passwd   string
-	scId     string
+	poolId   string
 	systemOp *SystemOp
 	volumeOp *VolumeOp
 	targetOp *TargetOp
@@ -48,7 +48,7 @@ func TestMain(m *testing.M) {
 	testConf.ip = testProp["QSAN_IP"]
 	testConf.user = testProp["QSAN_USERNAME"]
 	testConf.passwd = testProp["QSAN_PASSWORD"]
-	testConf.scId = testProp["TEST_SC_ID"]
+	testConf.poolId = testProp["POOL_ID"]
 	fmt.Printf("TestConf: %s %s/%s\n", testConf.ip, testConf.user, testConf.passwd)
 
 	testClient := getTestClient(testConf.ip)

@@ -18,7 +18,7 @@ func TestVolume(t *testing.T) {
 	//TRUE := true
 	//FALSE := false
 
-	scId64, _ := strconv.ParseUint(testConf.scId, 10, 64)
+	scId64, _ := strconv.ParseUint(testConf.poolId, 10, 64)
 
 	options1 := VolumeCreateOptions{
 		BlockSize:    4096,
@@ -50,7 +50,7 @@ func listTest(t *testing.T) {
 	}
 	fmt.Printf("[listVolume] : %+v \n", vols)
 
-	volsP, err := testConf.volumeOp.ListVolumesByPoolID(ctx, testConf.scId)
+	volsP, err := testConf.volumeOp.ListVolumesByPoolID(ctx, testConf.poolId)
 	if err != nil {
 		t.Fatalf("ListVolumes failed: %v", err)
 	}
