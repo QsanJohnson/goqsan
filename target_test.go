@@ -66,10 +66,11 @@ func TestTarget(t *testing.T) {
 		},
 	}
 
-	// // patch FCP parameter
-	// paramPFCP := PatchTargetParam{
-	// 	Name: "kyle_goqsm_PFCP",
-	// }
+	// patch FCP parameter
+	paramPFCP := PatchTargetParam{
+		Name: "kyle_goqsm_PFCP",
+		Type: "FCP",
+	}
 
 	// lun mapping parameter
 	paramMLun := LunMapParam{
@@ -98,7 +99,7 @@ func TestTarget(t *testing.T) {
 
 	// createTarget, listTarget, patchTarget, deleteTarget
 	createDLPTargetTest(t, &paramCSCSI, &paramPSCSI)
-	// createDLPTargetTest(t, &paramCFCP, &paramPFCP)
+	createDLPTargetTest(t, &paramCFCP, &paramPFCP)
 
 	// createTarget, mapLun, listLun, patchLun, unmapLun, deleteTarget
 	createTargetMapLunTest(t, &paramCSCSI, &paramMLun, &paramPLun)
