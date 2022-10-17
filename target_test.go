@@ -16,7 +16,11 @@ func TestTarget(t *testing.T) {
 	poolId64, _ := strconv.ParseUint(testConf.poolId, 10, 64)
 
 	// create volume paramater
+	now := time.Now()
+	timeStamp := now.Format("20060102150405")
+	volName := "gotest-vol-" + timeStamp
 	paramV := VolumeCreateOptions{
+		Name:         volName,
 		BlockSize:    4096,
 		UsedSize:     10240,
 		PoolID:       uint64(poolId64),
@@ -24,6 +28,14 @@ func TestTarget(t *testing.T) {
 		BgIoPriority: "HIGH",
 		CacheMode:    "WRITE_THROUGH",
 	}
+
+	//create volume
+	vol, err := testConf.volumeOp.CreateVolume(ctx, &paramV)
+	if err != nil {
+		t.Fatalf("createVolume failed: %v", err)
+	}
+	//volID := strconv.Itoa(vol.ID)
+	fmt.Printf("  A volume was created. Id:%s \n", vol.ID)
 
 	// create iSCSI parameter
 	paramCSCSI := CreateTargetParam{
@@ -89,8 +101,15 @@ func TestTarget(t *testing.T) {
 	// createDLPTargetTest(t, &paramCFCP, &paramPFCP)
 
 	// createTarget, mapLun, listLun, patchLun, unmapLun, deleteTarget
-	createTargetMapLunTest(t, &paramV, &paramCSCSI, &paramMLun, &paramPLun)
-	createTargetMapLunTest(t, &paramV, &paramCFCP, &paramMLun, &paramPLun)
+	createTargetMapLunTest(t, vol.ID, &paramCSCSI, &paramMLun, &paramPLun)
+	createTargetMapLunTest(t, vol.ID, &paramCFCP, &paramMLun, &paramPLun)
+
+	//delete volume
+	err = testConf.volumeOp.DeleteVolume(ctx, vol.ID)
+	if err != nil {
+		t.Fatalf("DeleteVolume failed: %v", err)
+	}
+	fmt.Printf("  A volume was deleted. Id:%s\n", vol.ID)
 
 	//list, patch
 	listPatchFCTest(t)
@@ -161,24 +180,11 @@ func createDLPTargetTest(t *testing.T, optionsT *CreateTargetParam, optionsP *Pa
 	// fmt.Println("createDeleteTargetTest Leave")
 }
 
-func createTargetMapLunTest(t *testing.T, optionsV *VolumeCreateOptions, optionsT *CreateTargetParam, optionsL *LunMapParam, optionsP *LunPatchParam) {
+func createTargetMapLunTest(t *testing.T, volID string, optionsT *CreateTargetParam, optionsL *LunMapParam, optionsP *LunPatchParam) {
 	fmt.Println("createTargetMapLunTest Enter")
 
-	now := time.Now()
-	timeStamp := now.Format("20060102150405")
-	volName := "gotest-vol-" + timeStamp
-	optionsV.Name = volName
-
-	//create volume
-	vol, err := testConf.volumeOp.CreateVolume(ctx, optionsV)
-	if err != nil {
-		t.Fatalf("createVolume failed: %v", err)
-	}
-	//volID := strconv.Itoa(vol.ID)
-	fmt.Printf("  A volume was created. Id:%s \n", vol.ID)
-
 	//assign volID to lun map parameter
-	optionsL.VolumeID = vol.ID
+	optionsL.VolumeID = volID
 
 	//create Target
 	tgt, err := testConf.targetOp.CreateTarget(ctx, optionsT)
@@ -230,13 +236,6 @@ func createTargetMapLunTest(t *testing.T, optionsV *VolumeCreateOptions, options
 		t.Fatalf("DeleteTarget failed: %v", err)
 	}
 	fmt.Printf("  A Target was deleted. \n")
-
-	//delete volume
-	err = testConf.volumeOp.DeleteVolume(ctx, vol.ID)
-	if err != nil {
-		t.Fatalf("DeleteVolume failed: %v", err)
-	}
-	fmt.Printf("  A volume was deleted. Id:%s\n", vol.ID)
 
 	fmt.Println("createTargetMapLunTest Leave")
 }

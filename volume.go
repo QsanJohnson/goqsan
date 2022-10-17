@@ -48,14 +48,6 @@ type VolumeCreateOptions struct {
 	EnableReadAhead *bool  `json:"enableReadAhead,omitempty"`
 }
 
-// type VolumeCreateOptions struct {
-// 	BlockSize    uint64
-// 	PoolId       uint64
-// 	IoPriority   string
-// 	BgIoPriority string
-// 	CacheMode    string
-// }
-
 type VolumeModifyOptions struct {
 	Name            string `json:"name,omitempty"`
 	UsedSize        uint64 `json:"usedSize,omitempty"`

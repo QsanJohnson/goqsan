@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-// TargetOp handles target related methods of the QSM storage.
+// TargetOp handles target related methods of the QSAN storage.
 type TargetOp struct {
 	client *AuthClient
 }

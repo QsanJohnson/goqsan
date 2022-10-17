@@ -17,13 +17,10 @@ func TestVolume(t *testing.T) {
 	//TRUE := true
 	FALSE := false
 
-	scId64, _ := strconv.ParseUint(testConf.poolId, 10, 64)
+	poolId64, _ := strconv.ParseUint(testConf.poolId, 10, 64)
 
 	paramCVol := VolumeCreateOptions{
-		Name:            "",
-		UsedSize:        5120,
 		BlockSize:       4096,
-		PoolID:          uint64(scId64),
 		IoPriority:      "HIGH",
 		BgIoPriority:    "HIGH",
 		CacheMode:       "WRITE_THROUGH",
@@ -38,9 +35,15 @@ func TestVolume(t *testing.T) {
 	// 	EnableReadAhead:      &TRUE,
 	// }
 
-	createDeleteVolumeTest(t, &paramCVol)
+	now := time.Now()
+	timeStamp := now.Format("20060102150405")
+	volName := "gotest-vol-" + timeStamp
+	createDeleteVolumeTest(t, uint64(poolId64), 5120, volName, &paramCVol)
 
-	modifyVolumeTest(t, &paramCVol)
+	now = time.Now()
+	timeStamp = now.Format("20060102150405")
+	volName = "gotest-vol-" + timeStamp
+	modifyVolumeTest(t, uint64(poolId64), 10240, volName, &paramCVol)
 
 }
 
@@ -59,13 +62,12 @@ func listTest(t *testing.T) {
 	fmt.Printf("[listVolume] : %+v \n", volsP)
 }
 
-func createDeleteVolumeTest(t *testing.T, options *VolumeCreateOptions) {
+func createDeleteVolumeTest(t *testing.T, poolID, volsize uint64, volname string, options *VolumeCreateOptions) {
 	fmt.Printf("createDeleteVolumeTest Enter (volSize: %d,  %+v )\n", options.UsedSize, *options)
 
-	now := time.Now()
-	timeStamp := now.Format("20060102150405")
-	volName := "gotest-vol-" + timeStamp
-	options.Name = volName
+	options.Name = volname
+	options.UsedSize = volsize
+	options.PoolID = poolID
 
 	//create volume
 	vol, err := testConf.volumeOp.CreateVolume(ctx, options)
@@ -98,12 +100,12 @@ func createDeleteVolumeTest(t *testing.T, options *VolumeCreateOptions) {
 	fmt.Println("createDeleteVolumeTest Leave")
 }
 
-func modifyVolumeTest(t *testing.T, options *VolumeCreateOptions) {
+func modifyVolumeTest(t *testing.T, poolID, volsize uint64, volname string, options *VolumeCreateOptions) {
 	fmt.Println("ModifyVolumeTest Enter")
-	now := time.Now()
-	timeStamp := now.Format("20060102150405")
-	volName := "gotest-vol-" + timeStamp
-	options.Name = volName
+
+	options.Name = volname
+	options.UsedSize = volsize
+	options.PoolID = poolID
 
 	// create volume
 	vol, err := testConf.volumeOp.CreateVolume(ctx, options)
