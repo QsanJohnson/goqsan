@@ -35,12 +35,12 @@ func TestVolume(t *testing.T) {
 	now := time.Now()
 	timeStamp := now.Format("20060102150405")
 	volName := "gotest-vol-" + timeStamp
-	createDeleteVolumeTest(t, testConf.poolId, 5120, volName, &paramCVol)
+	createDeleteVolumeTest(t, testConf.poolId, volName, 5120, &paramCVol)
 
 	now = time.Now()
 	timeStamp = now.Format("20060102150405")
 	volName = "gotest-vol-" + timeStamp
-	modifyVolumeTest(t, testConf.poolId, 10240, volName, &paramCVol)
+	modifyVolumeTest(t, testConf.poolId, volName, 10240, &paramCVol)
 
 }
 
@@ -59,11 +59,11 @@ func listTest(t *testing.T) {
 	fmt.Printf("[listVolume] : %+v \n", volsP)
 }
 
-func createDeleteVolumeTest(t *testing.T, poolID string, volsize uint64, volname string, options *VolumeCreateOptions) {
+func createDeleteVolumeTest(t *testing.T, poolID, volname string, volsize uint64, options *VolumeCreateOptions) {
 	fmt.Printf("createDeleteVolumeTest Enter (volSize: %d,  %+v )\n", options.UsedSize, *options)
 
 	//create volume
-	vol, err := testConf.volumeOp.CreateVolume(ctx, poolID, volsize, volname, options)
+	vol, err := testConf.volumeOp.CreateVolume(ctx, poolID, volname, volsize, options)
 	if err != nil {
 		t.Fatalf("createVolume failed: %v", err)
 	}
@@ -93,11 +93,11 @@ func createDeleteVolumeTest(t *testing.T, poolID string, volsize uint64, volname
 	fmt.Println("createDeleteVolumeTest Leave")
 }
 
-func modifyVolumeTest(t *testing.T, poolID string, volsize uint64, volname string, options *VolumeCreateOptions) {
+func modifyVolumeTest(t *testing.T, poolID, volname string, volsize uint64, options *VolumeCreateOptions) {
 	fmt.Println("ModifyVolumeTest Enter")
 
 	// create volume
-	vol, err := testConf.volumeOp.CreateVolume(ctx, poolID, volsize, volname, options)
+	vol, err := testConf.volumeOp.CreateVolume(ctx, poolID, volname, volsize, options)
 	if err != nil {
 		t.Fatalf("createVolume failed: %v", err)
 	}

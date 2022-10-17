@@ -27,7 +27,7 @@ func TestTarget(t *testing.T) {
 	}
 
 	//create volume
-	vol, err := testConf.volumeOp.CreateVolume(ctx, paramV.PoolID, paramV.UsedSize, paramV.Name, &paramV)
+	vol, err := testConf.volumeOp.CreateVolume(ctx, paramV.PoolID, paramV.Name, paramV.UsedSize, &paramV)
 	if err != nil {
 		t.Fatalf("createVolume failed: %v", err)
 	}
