@@ -104,7 +104,11 @@ func (v *VolumeOp) ListVolumesByPoolID(ctx context.Context, poolID string) (*[]V
 }
 
 // CreateVolume create a volume on a storage container
-func (v *VolumeOp) CreateVolume(ctx context.Context, options *VolumeCreateOptions) (*VolumeData, error) {
+func (v *VolumeOp) CreateVolume(ctx context.Context, poolID, volsize uint64, volname string, options *VolumeCreateOptions) (*VolumeData, error) {
+
+	options.Name = volname
+	options.UsedSize = volsize
+	options.PoolID = poolID
 
 	rawdata, _ := json.Marshal(options)
 	req, err := v.client.NewRequest(ctx, http.MethodPost, "/rest/v2/storage/block/volumes", string(rawdata))

@@ -25,7 +25,6 @@ type Iscsi struct {
 
 // POST /rest/v2/dataTransfer/targets
 type CreateTargetParam struct {
-	ID     string  `json:"id"`
 	Name   string  `json:"name"`
 	Type   string  `json:"type"`
 	Iscsis []Iscsi `json:"iscsi"`
@@ -46,7 +45,7 @@ type Host struct {
 
 // POST /rest/v2/dataTransfer/targets/_targetID/luns
 type LunMapParam struct {
-	Name     string `json:"name"`
+	Name     string `json:"name,omitempty"`
 	VolumeID string `json:"volumeId"`
 	Hosts    []Host `json:"hosts"`
 }
@@ -167,7 +166,10 @@ func (v *TargetOp) PatchTarget(ctx context.Context, targetID string, param *Patc
 }
 
 // CreateTarget create a target on a storage server
-func (v *TargetOp) CreateTarget(ctx context.Context, param *CreateTargetParam) (*TargetData, error) {
+func (v *TargetOp) CreateTarget(ctx context.Context, tgtName, tgtType string, param *CreateTargetParam) (*TargetData, error) {
+
+	param.Name = tgtName
+	param.Type = tgtType
 	rawdata, _ := json.Marshal(param)
 	req, err := v.client.NewRequest(ctx, http.MethodPost, "/rest/v2/dataTransfer/targets", string(rawdata))
 	if err != nil {
@@ -198,7 +200,9 @@ func (v *TargetOp) DeleteTarget(ctx context.Context, targetId string) error {
 }
 
 //Mapping lun
-func (v *TargetOp) MapLun(ctx context.Context, targetID string, param *LunMapParam) (*LunData, error) {
+func (v *TargetOp) MapLun(ctx context.Context, targetID, volID string, param *LunMapParam) (*LunData, error) {
+
+	param.VolumeID = volID
 	rawdata, _ := json.Marshal(param)
 	req, err := v.client.NewRequest(ctx, http.MethodPost, "/rest/v2/dataTransfer/targets/"+targetID+"/luns", string(rawdata))
 	if err != nil {

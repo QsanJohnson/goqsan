@@ -30,7 +30,7 @@ func TestTarget(t *testing.T) {
 	}
 
 	//create volume
-	vol, err := testConf.volumeOp.CreateVolume(ctx, &paramV)
+	vol, err := testConf.volumeOp.CreateVolume(ctx, paramV.PoolID, paramV.UsedSize, paramV.Name, &paramV)
 	if err != nil {
 		t.Fatalf("createVolume failed: %v", err)
 	}
@@ -39,7 +39,7 @@ func TestTarget(t *testing.T) {
 
 	// create iSCSI parameter
 	paramCSCSI := CreateTargetParam{
-		Name: "kyle_test_groupSCSI",
+		Name: "kyle_test_groupCSCSI",
 		Type: "iSCSI",
 		Iscsis: []Iscsi{
 			{
@@ -50,21 +50,21 @@ func TestTarget(t *testing.T) {
 
 	// create FCP parameter
 	paramCFCP := CreateTargetParam{
-		Name: "test_groupFCP",
+		Name: "kyle_test_groupCFCP",
 		Type: "FCP",
 	}
 
-	// // patch iSCSI parameter
-	// paramPSCSI := PatchTargetParam{
-	// 	Name: "kyle_goqsm_PSCSI",
-	// 	Type: "iSCSI",
-	// 	Iscsis: []Iscsi{
-	// 		{
-	// 			Name: "2",
-	// 			Eths: []string{"c0e1", "c0e2"},
-	// 		},
-	// 	},
-	// }
+	// patch iSCSI parameter
+	paramPSCSI := PatchTargetParam{
+		Name: "kyle_goqsm_PSCSI",
+		Type: "iSCSI",
+		Iscsis: []Iscsi{
+			{
+				Name: "2",
+				Eths: []string{"c0e1", "c0e2"},
+			},
+		},
+	}
 
 	// // patch FCP parameter
 	// paramPFCP := PatchTargetParam{
@@ -96,8 +96,8 @@ func TestTarget(t *testing.T) {
 	// createDeleteTargetTest(t, &paramCSCSI)
 	// createDeleteTargetTest(t, &paramCFCP)
 
-	// // createTarget, listTarget, patchTarget, deleteTarget
-	// createDLPTargetTest(t, &paramCSCSI, &paramPSCSI)
+	// createTarget, listTarget, patchTarget, deleteTarget
+	createDLPTargetTest(t, &paramCSCSI, &paramPSCSI)
 	// createDLPTargetTest(t, &paramCFCP, &paramPFCP)
 
 	// createTarget, mapLun, listLun, patchLun, unmapLun, deleteTarget
@@ -129,7 +129,7 @@ func createDeleteTargetTest(t *testing.T, optionsT *CreateTargetParam) {
 	fmt.Println("createTargetTest Enter")
 
 	//create Target
-	tgt, err := testConf.targetOp.CreateTarget(ctx, optionsT)
+	tgt, err := testConf.targetOp.CreateTarget(ctx, optionsT.Name, optionsT.Type, optionsT)
 	if err != nil {
 		t.Fatalf("CreateTarget failed: %v", err)
 	}
@@ -150,7 +150,7 @@ func createDLPTargetTest(t *testing.T, optionsT *CreateTargetParam, optionsP *Pa
 	fmt.Println("createTargetTest Enter")
 
 	//create Target
-	tgt, err := testConf.targetOp.CreateTarget(ctx, optionsT)
+	tgt, err := testConf.targetOp.CreateTarget(ctx, optionsT.Name, optionsT.Type, optionsT)
 	if err != nil {
 		t.Fatalf("CreateTarget failed: %v", err)
 	}
@@ -170,28 +170,34 @@ func createDLPTargetTest(t *testing.T, optionsT *CreateTargetParam, optionsP *Pa
 	}
 	fmt.Printf("  A Target has been patched. %+v\n", tgt)
 
-	// //delete Target
-	// err = testConf.targetOp.DeleteTarget(ctx, tgt.ID)
-	// if err != nil {
-	// 	t.Fatalf("DeleteTarget failed: %v", err)
-	// }
-	// fmt.Printf("  A Target was deleted. \n")
+	fmt.Printf("  Sleep 5 seconds\n")
+	time.Sleep(5 * time.Second)
 
-	// fmt.Println("createDeleteTargetTest Leave")
+	//delete Target
+	err = testConf.targetOp.DeleteTarget(ctx, tgt.ID)
+	if err != nil {
+		t.Fatalf("DeleteTarget failed: %v", err)
+	}
+	fmt.Printf("  A Target was deleted. \n")
+
+	fmt.Printf("  Sleep 5 seconds\n")
+	time.Sleep(5 * time.Second)
+
+	fmt.Println("createDeleteTargetTest Leave")
 }
 
 func createTargetMapLunTest(t *testing.T, optionsT *CreateTargetParam, optionsL *LunMapParam, optionsP *LunPatchParam) {
 	fmt.Println("createTargetMapLunTest Enter")
 
 	//create Target
-	tgt, err := testConf.targetOp.CreateTarget(ctx, optionsT)
+	tgt, err := testConf.targetOp.CreateTarget(ctx, optionsT.Name, optionsT.Type, optionsT)
 	if err != nil {
 		t.Fatalf("CreateTarget failed: %v", err)
 	}
 	fmt.Printf("  A Target was created. %+v\n", tgt)
 
 	//map Lun
-	lunD, err := testConf.targetOp.MapLun(ctx, tgt.ID, optionsL)
+	lunD, err := testConf.targetOp.MapLun(ctx, tgt.ID, optionsL.VolumeID, optionsL)
 	if err != nil {
 		t.Fatalf("MapLun failed: %v", err)
 	}

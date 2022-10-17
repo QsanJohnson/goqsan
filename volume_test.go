@@ -65,12 +65,8 @@ func listTest(t *testing.T) {
 func createDeleteVolumeTest(t *testing.T, poolID, volsize uint64, volname string, options *VolumeCreateOptions) {
 	fmt.Printf("createDeleteVolumeTest Enter (volSize: %d,  %+v )\n", options.UsedSize, *options)
 
-	options.Name = volname
-	options.UsedSize = volsize
-	options.PoolID = poolID
-
 	//create volume
-	vol, err := testConf.volumeOp.CreateVolume(ctx, options)
+	vol, err := testConf.volumeOp.CreateVolume(ctx, poolID, volsize, volname, options)
 	if err != nil {
 		t.Fatalf("createVolume failed: %v", err)
 	}
@@ -103,12 +99,8 @@ func createDeleteVolumeTest(t *testing.T, poolID, volsize uint64, volname string
 func modifyVolumeTest(t *testing.T, poolID, volsize uint64, volname string, options *VolumeCreateOptions) {
 	fmt.Println("ModifyVolumeTest Enter")
 
-	options.Name = volname
-	options.UsedSize = volsize
-	options.PoolID = poolID
-
 	// create volume
-	vol, err := testConf.volumeOp.CreateVolume(ctx, options)
+	vol, err := testConf.volumeOp.CreateVolume(ctx, poolID, volsize, volname, options)
 	if err != nil {
 		t.Fatalf("createVolume failed: %v", err)
 	}
