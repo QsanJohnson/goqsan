@@ -73,8 +73,8 @@ func TestTarget(t *testing.T) {
 
 	// lun mapping parameter
 	paramMLun := LunMapParam{
-		Name:     "10", // Lun number, can choose from 0 to 254
-		VolumeID: "",   //2074967409
+		Name:     "10",   // Lun number, can choose from 0 to 254
+		VolumeID: vol.ID, //2074967409
 		Hosts: []Host{
 			{
 				Name: []string{"*"}, // iqn/WWN(iSCSI/FCP)
@@ -101,8 +101,8 @@ func TestTarget(t *testing.T) {
 	// createDLPTargetTest(t, &paramCFCP, &paramPFCP)
 
 	// createTarget, mapLun, listLun, patchLun, unmapLun, deleteTarget
-	createTargetMapLunTest(t, vol.ID, &paramCSCSI, &paramMLun, &paramPLun)
-	createTargetMapLunTest(t, vol.ID, &paramCFCP, &paramMLun, &paramPLun)
+	createTargetMapLunTest(t, &paramCSCSI, &paramMLun, &paramPLun)
+	createTargetMapLunTest(t, &paramCFCP, &paramMLun, &paramPLun)
 
 	//delete volume
 	err = testConf.volumeOp.DeleteVolume(ctx, vol.ID)
@@ -180,11 +180,8 @@ func createDLPTargetTest(t *testing.T, optionsT *CreateTargetParam, optionsP *Pa
 	// fmt.Println("createDeleteTargetTest Leave")
 }
 
-func createTargetMapLunTest(t *testing.T, volID string, optionsT *CreateTargetParam, optionsL *LunMapParam, optionsP *LunPatchParam) {
+func createTargetMapLunTest(t *testing.T, optionsT *CreateTargetParam, optionsL *LunMapParam, optionsP *LunPatchParam) {
 	fmt.Println("createTargetMapLunTest Enter")
-
-	//assign volID to lun map parameter
-	optionsL.VolumeID = volID
 
 	//create Target
 	tgt, err := testConf.targetOp.CreateTarget(ctx, optionsT)
