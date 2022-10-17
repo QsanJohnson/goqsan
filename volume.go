@@ -6,9 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"net/url"
-	"strconv"
-	//"reflect"
 )
 
 // VolumeOp handles volume related methods of the QSAN storage.
@@ -41,12 +38,23 @@ type VolumeData struct {
 }
 
 type VolumeCreateOptions struct {
-	BlockSize    uint64 // recordsize: 1024, 2048 ..., 65536
-	PoolId       uint64
-	IoPriority   string
-	BgIoPriority string
-	CacheMode    string
+	Name            string `json:"name"`
+	UsedSize        uint64 `json:"usedSize"`
+	BlockSize       uint64 `json:"blockSize"`
+	PoolID          uint64 `json:"poolId"`
+	IoPriority      string `json:"ioPriority,omitempty"`
+	BgIoPriority    string `json:"bgIoPriority,omitempty"`
+	CacheMode       string `json:"cacheMode,omitempty"`
+	EnableReadAhead *bool  `json:"enableReadAhead,omitempty"`
 }
+
+// type VolumeCreateOptions struct {
+// 	BlockSize    uint64
+// 	PoolId       uint64
+// 	IoPriority   string
+// 	BgIoPriority string
+// 	CacheMode    string
+// }
 
 type VolumeModifyOptions struct {
 	Name            string `json:"name,omitempty"`
@@ -104,27 +112,10 @@ func (v *VolumeOp) ListVolumesByPoolID(ctx context.Context, poolID string) (*[]V
 }
 
 // CreateVolume create a volume on a storage container
-func (v *VolumeOp) CreateVolume(ctx context.Context, name string, size uint64, options *VolumeCreateOptions) (*VolumeData, error) {
-	params := url.Values{}
-	params.Add("name", name)
-	params.Add("usedSize", strconv.FormatUint(size, 10))
+func (v *VolumeOp) CreateVolume(ctx context.Context, options *VolumeCreateOptions) (*VolumeData, error) {
 
-	var optionMap map[string]interface{}
-	data, _ := json.Marshal(options)
-	json.Unmarshal(data, &optionMap)
-
-	// 'int' type will become 'float64' type after struct to map[string]interface{} conversion
-	if optionMap["BlockSize"] != float64(0) {
-		v := uint64(optionMap["BlockSize"].(float64))
-		params.Add("blockSize", strconv.FormatUint(v, 10))
-	}
-
-	if optionMap["PoolId"] != "" {
-		v := uint64(optionMap["PoolId"].(float64))
-		params.Add("poolId", strconv.FormatUint(v, 10))
-	}
-
-	req, err := v.client.NewRequest(ctx, http.MethodPost, "/rest/v2/storage/block/volumes", params)
+	rawdata, _ := json.Marshal(options)
+	req, err := v.client.NewRequest(ctx, http.MethodPost, "/rest/v2/storage/block/volumes", string(rawdata))
 	if err != nil {
 		return nil, err
 	}

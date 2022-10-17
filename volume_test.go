@@ -6,26 +6,28 @@ import (
 	"strconv"
 	"testing"
 	"time"
-	//"time"
 )
 
 func TestVolume(t *testing.T) {
 	fmt.Println("------------TestVolume--------------")
 	ctx = context.Background()
 
-	listTest(t)
+	//listTest(t)
 
 	//TRUE := true
-	//FALSE := false
+	FALSE := false
 
 	scId64, _ := strconv.ParseUint(testConf.poolId, 10, 64)
 
-	options1 := VolumeCreateOptions{
-		BlockSize:    4096,
-		PoolId:       uint64(scId64),
-		IoPriority:   "HIGH",
-		BgIoPriority: "HIGH",
-		CacheMode:    "WRITE_THROUGH",
+	paramCVol := VolumeCreateOptions{
+		Name:            "",
+		UsedSize:        5120,
+		BlockSize:       4096,
+		PoolID:          uint64(scId64),
+		IoPriority:      "HIGH",
+		BgIoPriority:    "HIGH",
+		CacheMode:       "WRITE_THROUGH",
+		EnableReadAhead: &FALSE,
 	}
 
 	// options2 := VolumeModifyOptions{
@@ -36,9 +38,9 @@ func TestVolume(t *testing.T) {
 	// 	EnableReadAhead:      &TRUE,
 	// }
 
-	// createDeleteVolumeTest(t, 5120, &options1)
+	createDeleteVolumeTest(t, &paramCVol)
 
-	modifyVolumeTest(t, 10240, &options1)
+	modifyVolumeTest(t, &paramCVol)
 
 }
 
@@ -57,19 +59,19 @@ func listTest(t *testing.T) {
 	fmt.Printf("[listVolume] : %+v \n", volsP)
 }
 
-func createDeleteVolumeTest(t *testing.T, volSize uint64, options *VolumeCreateOptions) {
-	fmt.Printf("createDeleteVolumeTest Enter (volSize: %d,  %+v )\n", volSize, *options)
+func createDeleteVolumeTest(t *testing.T, options *VolumeCreateOptions) {
+	fmt.Printf("createDeleteVolumeTest Enter (volSize: %d,  %+v )\n", options.UsedSize, *options)
 
 	now := time.Now()
 	timeStamp := now.Format("20060102150405")
 	volName := "gotest-vol-" + timeStamp
+	options.Name = volName
 
 	//create volume
-	vol, err := testConf.volumeOp.CreateVolume(ctx, volName, volSize, options)
+	vol, err := testConf.volumeOp.CreateVolume(ctx, options)
 	if err != nil {
 		t.Fatalf("createVolume failed: %v", err)
 	}
-	//volId := strconv.Itoa(vol.ID)
 	fmt.Printf("  A volume was created. Id:%s \n", vol.ID)
 
 	//list volume
@@ -80,7 +82,10 @@ func createDeleteVolumeTest(t *testing.T, volSize uint64, options *VolumeCreateO
 	if len(*vols) != 1 {
 		t.Fatalf("Volume %s not found.", vol.ID)
 	}
-	fmt.Printf("[listVolume] : %+v", vols)
+	fmt.Printf("[listVolume] : %+v \n", vols)
+
+	fmt.Printf("  Sleep 5 seconds\n")
+	time.Sleep(5 * time.Second)
 
 	//delete volume
 	fmt.Println("start delete")
@@ -93,17 +98,19 @@ func createDeleteVolumeTest(t *testing.T, volSize uint64, options *VolumeCreateO
 	fmt.Println("createDeleteVolumeTest Leave")
 }
 
-func modifyVolumeTest(t *testing.T, volSize uint64, options *VolumeCreateOptions) {
+func modifyVolumeTest(t *testing.T, options *VolumeCreateOptions) {
 	fmt.Println("ModifyVolumeTest Enter")
 	now := time.Now()
 	timeStamp := now.Format("20060102150405")
 	volName := "gotest-vol-" + timeStamp
+	options.Name = volName
 
 	// create volume
-	vol, err := testConf.volumeOp.CreateVolume(ctx, volName, volSize, options)
+	vol, err := testConf.volumeOp.CreateVolume(ctx, options)
 	if err != nil {
 		t.Fatalf("createVolume failed: %v", err)
 	}
+	//volID := strconv.Itoa(vol.ID)
 	fmt.Printf("  A volume was created. Id:%s \n", vol.ID)
 
 	readahead := true
@@ -160,7 +167,7 @@ func modifyVolumeTest(t *testing.T, volSize uint64, options *VolumeCreateOptions
 	fmt.Printf("  Sleep 5 seconds\n")
 	time.Sleep(5 * time.Second)
 
-	// delete volume
+	//delete volume
 	err = testConf.volumeOp.DeleteVolume(ctx, vol.ID)
 	if err != nil {
 		t.Fatalf("DeleteVolume failed: %v", err)

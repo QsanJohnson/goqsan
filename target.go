@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-// TargetOp handles target related methods of the QSAN storage.
+// TargetOp handles target related methods of the QSM storage.
 type TargetOp struct {
 	client *AuthClient
 }
@@ -18,8 +18,8 @@ type TargetOp struct {
 // POST /rest/v2/dataTransfer/targets
 // PATCH /rest/v2/dataTransfer/targets/_targetID
 type Iscsi struct {
-	Name  string      `json:"name"`
-	Alias interface{} `json:"alias"`
+	Name  string      `json:"name,omitempty"`
+	Alias interface{} `json:"alias,omitempty"`
 	Eths  []string    `json:"eths,omitempty"`
 }
 
@@ -33,15 +33,15 @@ type CreateTargetParam struct {
 
 // PATCH /rest/v2/dataTransfer/targets/_targetID
 type PatchTargetParam struct {
-	Name   string  `json:"name"`
-	Type   string  `json:"type"`
-	Iscsis []Iscsi `json:"iscsi"`
+	Name   string  `json:"name,omitempty"`
+	Type   string  `json:"type,omitempty"`
+	Iscsis []Iscsi `json:"iscsi,omitempty"`
 }
 
 // POST /rest/v2/dataTransfer/targets/_targetID/luns
 // PATCH /rest/v2/dataTransfer/targets/_targetID/luns/_lunID
 type Host struct {
-	Name []string `json:"name"` // iqn/WWN
+	Name []string `json:"name,omitempty"` // iqn/WWN
 }
 
 // POST /rest/v2/dataTransfer/targets/_targetID/luns
@@ -53,8 +53,8 @@ type LunMapParam struct {
 
 // PATCH /rest/v2/dataTransfer/targets/_targetID/luns/_lunID
 type LunPatchParam struct {
-	Name  string `json:"name"`
-	Hosts []Host `json:"hosts"`
+	Name  string `json:"name,omitempty"`
+	Hosts []Host `json:"hosts,omitempty"`
 }
 
 // return value GET /rest/v2/dataTransfer/targets
@@ -228,7 +228,7 @@ func (v *TargetOp) UnmapLun(ctx context.Context, targetId, lunId string) error {
 }
 
 //list all luns under given targetID
-func (v *TargetOp) ListAllLuns(ctx context.Context, targetID string, param *LunMapParam) (*[]LunData, error) {
+func (v *TargetOp) ListAllLuns(ctx context.Context, targetID string) (*[]LunData, error) {
 	req, err := v.client.NewRequest(ctx, http.MethodGet, "/rest/v2/dataTransfer/targets/"+targetID+"/luns/", nil)
 	if err != nil {
 		return nil, err
@@ -242,7 +242,7 @@ func (v *TargetOp) ListAllLuns(ctx context.Context, targetID string, param *LunM
 }
 
 //list target lun
-func (v *TargetOp) ListTargetLun(ctx context.Context, targetID, lunID string, param *LunMapParam) (*LunData, error) {
+func (v *TargetOp) ListTargetLun(ctx context.Context, targetID, lunID string) (*LunData, error) {
 	req, err := v.client.NewRequest(ctx, http.MethodGet, "/rest/v2/dataTransfer/targets/"+targetID+"/luns/"+lunID, nil)
 	if err != nil {
 		return nil, err
