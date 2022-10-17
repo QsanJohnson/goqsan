@@ -3,7 +3,6 @@ package goqsan
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"testing"
 	"time"
 )
@@ -16,8 +15,6 @@ func TestVolume(t *testing.T) {
 
 	//TRUE := true
 	FALSE := false
-
-	poolId64, _ := strconv.ParseUint(testConf.poolId, 10, 64)
 
 	paramCVol := VolumeCreateOptions{
 		BlockSize:       4096,
@@ -38,12 +35,12 @@ func TestVolume(t *testing.T) {
 	now := time.Now()
 	timeStamp := now.Format("20060102150405")
 	volName := "gotest-vol-" + timeStamp
-	createDeleteVolumeTest(t, uint64(poolId64), 5120, volName, &paramCVol)
+	createDeleteVolumeTest(t, testConf.poolId, 5120, volName, &paramCVol)
 
 	now = time.Now()
 	timeStamp = now.Format("20060102150405")
 	volName = "gotest-vol-" + timeStamp
-	modifyVolumeTest(t, uint64(poolId64), 10240, volName, &paramCVol)
+	modifyVolumeTest(t, testConf.poolId, 10240, volName, &paramCVol)
 
 }
 
@@ -62,7 +59,7 @@ func listTest(t *testing.T) {
 	fmt.Printf("[listVolume] : %+v \n", volsP)
 }
 
-func createDeleteVolumeTest(t *testing.T, poolID, volsize uint64, volname string, options *VolumeCreateOptions) {
+func createDeleteVolumeTest(t *testing.T, poolID string, volsize uint64, volname string, options *VolumeCreateOptions) {
 	fmt.Printf("createDeleteVolumeTest Enter (volSize: %d,  %+v )\n", options.UsedSize, *options)
 
 	//create volume
@@ -96,7 +93,7 @@ func createDeleteVolumeTest(t *testing.T, poolID, volsize uint64, volname string
 	fmt.Println("createDeleteVolumeTest Leave")
 }
 
-func modifyVolumeTest(t *testing.T, poolID, volsize uint64, volname string, options *VolumeCreateOptions) {
+func modifyVolumeTest(t *testing.T, poolID string, volsize uint64, volname string, options *VolumeCreateOptions) {
 	fmt.Println("ModifyVolumeTest Enter")
 
 	// create volume

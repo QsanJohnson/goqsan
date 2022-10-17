@@ -41,7 +41,7 @@ type VolumeCreateOptions struct {
 	Name            string `json:"name"`
 	UsedSize        uint64 `json:"usedSize"`
 	BlockSize       uint64 `json:"blockSize"`
-	PoolID          uint64 `json:"poolId"`
+	PoolID          string `json:"poolId"`
 	IoPriority      string `json:"ioPriority,omitempty"`
 	BgIoPriority    string `json:"bgIoPriority,omitempty"`
 	CacheMode       string `json:"cacheMode,omitempty"`
@@ -104,7 +104,7 @@ func (v *VolumeOp) ListVolumesByPoolID(ctx context.Context, poolID string) (*[]V
 }
 
 // CreateVolume create a volume on a storage container
-func (v *VolumeOp) CreateVolume(ctx context.Context, poolID, volsize uint64, volname string, options *VolumeCreateOptions) (*VolumeData, error) {
+func (v *VolumeOp) CreateVolume(ctx context.Context, poolID string, volsize uint64, volname string, options *VolumeCreateOptions) (*VolumeData, error) {
 
 	options.Name = volname
 	options.UsedSize = volsize

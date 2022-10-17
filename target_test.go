@@ -3,7 +3,6 @@ package goqsan
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"testing"
 	"time"
 )
@@ -13,8 +12,6 @@ func TestTarget(t *testing.T) {
 
 	ctx = context.Background()
 
-	poolId64, _ := strconv.ParseUint(testConf.poolId, 10, 64)
-
 	// create volume paramater
 	now := time.Now()
 	timeStamp := now.Format("20060102150405")
@@ -23,7 +20,7 @@ func TestTarget(t *testing.T) {
 		Name:         volName,
 		BlockSize:    4096,
 		UsedSize:     10240,
-		PoolID:       uint64(poolId64),
+		PoolID:       testConf.poolId,
 		IoPriority:   "HIGH",
 		BgIoPriority: "HIGH",
 		CacheMode:    "WRITE_THROUGH",
