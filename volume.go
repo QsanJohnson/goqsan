@@ -17,7 +17,8 @@ type VolumeData struct {
 	ID                    string      `json:"id"`
 	Name                  string      `json:"name"`
 	PoolID                string      `json:"poolId"`
-	LunID                 interface{} `json:"lunId"`
+	LunID                 string      `json:"lunId"`
+	TargetID              interface{} `json:"targetId"`
 	Online                bool        `json:"online"`
 	Health                string      `json:"health"`
 	Provision             string      `json:"provision"`
