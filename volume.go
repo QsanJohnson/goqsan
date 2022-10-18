@@ -14,24 +14,24 @@ type VolumeOp struct {
 }
 
 type VolumeData struct {
-	ID                    string      `json:"id"`
-	Name                  string      `json:"name"`
-	PoolID                string      `json:"poolId"`
-	LunID                 string      `json:"lunId"`
-	TargetID              interface{} `json:"targetId"`
-	Online                bool        `json:"online"`
-	Health                string      `json:"health"`
-	Provision             string      `json:"provision"`
-	TotalSize             uint64      `json:"totalSize"`
-	UsedSize              uint64      `json:"usedSize"`
-	BlockSize             uint64      `json:"blockSize"`
-	StripeSize            uint64      `json:"stripeSize"`
-	CacheMode             string      `json:"cacheMode"`
-	IoPriority            string      `json:"ioPriority"`
-	BgIoPriority          string      `json:"bgIoPriority"`
-	EnableReadAhead       bool        `json:"enableReadAhead"`
-	EraseData             string      `json:"eraseData"`
-	EnableFastRaidRebuild bool        `json:"enableFastRaidRebuild"`
+	ID                    string `json:"id"`
+	Name                  string `json:"name"`
+	PoolID                string `json:"poolId"`
+	LunID                 string `json:"lunId"`
+	TargetID              string `json:"targetId"`
+	Online                bool   `json:"online"`
+	Health                string `json:"health"`
+	Provision             string `json:"provision"`
+	TotalSize             uint64 `json:"totalSize"`
+	UsedSize              uint64 `json:"usedSize"`
+	BlockSize             uint64 `json:"blockSize"`
+	StripeSize            uint64 `json:"stripeSize"`
+	CacheMode             string `json:"cacheMode"`
+	IoPriority            string `json:"ioPriority"`
+	BgIoPriority          string `json:"bgIoPriority"`
+	EnableReadAhead       bool   `json:"enableReadAhead"`
+	EraseData             string `json:"eraseData"`
+	EnableFastRaidRebuild bool   `json:"enableFastRaidRebuild"`
 	Tags                  struct {
 		Wwn  string `json:"wwn"`
 		Type string `json:"type"`
