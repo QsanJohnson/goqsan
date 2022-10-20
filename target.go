@@ -40,7 +40,7 @@ type PatchTargetParam struct {
 // POST /rest/v2/dataTransfer/targets/_targetID/luns
 // PATCH /rest/v2/dataTransfer/targets/_targetID/luns/_lunID
 type Host struct {
-	Name []string `json:"name,omitempty"` // iqn/WWN
+	Name string `json:"name,omitempty"` // iqn/WWN
 }
 
 // POST /rest/v2/dataTransfer/targets/_targetID/luns

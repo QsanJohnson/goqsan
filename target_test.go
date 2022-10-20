@@ -19,7 +19,7 @@ func TestTarget(t *testing.T) {
 	paramV := VolumeCreateOptions{
 		Name:         volName,
 		BlockSize:    4096,
-		UsedSize:     10240,
+		UsedSize:     12288,
 		PoolID:       testConf.poolId,
 		IoPriority:   "HIGH",
 		BgIoPriority: "HIGH",
@@ -40,7 +40,7 @@ func TestTarget(t *testing.T) {
 		Type: "iSCSI",
 		Iscsis: []Iscsi{
 			{
-				Eths: []string{"c0e1", "c0e2"},
+				Eths: []string{"c0e5", "c0e6"},
 			},
 		},
 	}
@@ -75,7 +75,7 @@ func TestTarget(t *testing.T) {
 		VolumeID: vol.ID, //2074967409
 		Hosts: []Host{
 			{
-				Name: []string{"*"}, // iqn/WWN(iSCSI/FCP)
+				Name: "*", // iqn/WWN(iSCSI/FCP)
 			},
 		},
 	}
@@ -85,7 +85,7 @@ func TestTarget(t *testing.T) {
 		Name: "5", // Lun number, can choose from 0 to 254
 		Hosts: []Host{
 			{
-				Name: []string{"*"}, // iqn/WWN(iSCSI/FCP)
+				Name: "*", // iqn/WWN(iSCSI/FCP)
 			},
 		},
 	}
