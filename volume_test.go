@@ -3,6 +3,7 @@ package goqsan
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 )
@@ -11,7 +12,7 @@ func TestVolume(t *testing.T) {
 	fmt.Println("------------TestVolume--------------")
 	ctx = context.Background()
 
-	//listTest(t)
+	listTest(t)
 
 	//TRUE := true
 	FALSE := false
@@ -45,18 +46,43 @@ func TestVolume(t *testing.T) {
 }
 
 func listTest(t *testing.T) {
+	fmt.Println("listTest Enter")
 
-	vols, err := testConf.volumeOp.ListVolumes(ctx, "")
+	vols, err := testConf.volumeOp.ListVolumes(ctx)
 	if err != nil {
 		t.Fatalf("ListVolumes failed: %v", err)
 	}
-	fmt.Printf("[listVolume] : %+v \n", vols)
+	fmt.Printf("ListVolumes: cnt=%d\n%+v \n", len(*vols), vols)
 
-	volsP, err := testConf.volumeOp.ListVolumesByPoolID(ctx, testConf.poolId)
-	if err != nil {
-		t.Fatalf("ListVolumes failed: %v", err)
+	if len(*vols) >= 1 {
+		vol, err := testConf.volumeOp.ListVolumeByID(ctx, (*vols)[0].ID)
+		if err != nil {
+			t.Fatalf("ListVolumeByID with exist ID failed: %v", err)
+		}
+		fmt.Printf("ListVolumeByID with exist ID: %+v \n", vol)
 	}
-	fmt.Printf("[listVolume] : %+v \n", volsP)
+
+	_, err = testConf.volumeOp.ListVolumeByID(ctx, "2222222222")
+	if err != nil {
+		resterr, ok := err.(*RestError)
+		if ok {
+			fmt.Printf("ListVolumeByID with non-exist ID, StatusCode=%d ErrResp=%+v\n", resterr.StatusCode, resterr.ErrResp)
+			if resterr.StatusCode != http.StatusNotFound {
+				t.Fatalf("ListVolumeByID with non-exist ID failed: StatusCode=%d ErrResp=%+v\n", resterr.StatusCode, resterr.ErrResp)
+			}
+		} else {
+			t.Fatalf("ListVolumeByID with non-exist ID failed: %v\n", resterr)
+		}
+	}
+	fmt.Printf("ListVolumeByID with non-exist ID PASS\n")
+
+	vols, err = testConf.volumeOp.ListVolumesByPoolID(ctx, testConf.poolId)
+	if err != nil {
+		t.Fatalf("ListVolumesByPoolID failed: %v", err)
+	}
+	fmt.Printf("ListVolumesByPoolID: cnt=%d\n%+v \n", len(*vols), vols)
+
+	fmt.Println("listTest Leave")
 }
 
 func createDeleteVolumeTest(t *testing.T, poolID, volname string, volsize uint64, options *VolumeCreateOptions) {
@@ -70,14 +96,19 @@ func createDeleteVolumeTest(t *testing.T, poolID, volname string, volsize uint64
 	fmt.Printf("  A volume was created. Id:%s \n", vol.ID)
 
 	//list volume
-	vols, err := testConf.volumeOp.ListVolumes(ctx, vol.ID)
+	v, err := testConf.volumeOp.ListVolumeByID(ctx, vol.ID)
 	if err != nil {
-		t.Fatalf("ListVolumes failed: %v", err)
+		resterr, ok := err.(*RestError)
+		if ok {
+			if resterr.StatusCode == http.StatusNotFound {
+				t.Fatalf("Volume %s not found.", vol.ID)
+			}
+			fmt.Printf("[ListVolumeByID] StatusCode=%d ErrResp=%+v\n", resterr.StatusCode, resterr.ErrResp)
+		}
+
+		t.Fatalf("ListVolumeByID failed: %v", err)
 	}
-	if len(*vols) != 1 {
-		t.Fatalf("Volume %s not found.", vol.ID)
-	}
-	fmt.Printf("[listVolume] : %+v \n", vols)
+	fmt.Printf("ListVolumeByID : %+v \n", v)
 
 	fmt.Printf("  Sleep 5 seconds\n")
 	time.Sleep(5 * time.Second)

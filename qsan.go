@@ -52,6 +52,16 @@ type errorResponse struct {
 	} `json:"error"`
 }
 
+type RestError struct {
+	StatusCode int
+	ErrResp    errorResponse
+	Err        error
+}
+
+func (r *RestError) Error() string {
+	return fmt.Sprintf("status %d: %v (%d)", r.StatusCode, r.ErrResp.Error.Message, r.ErrResp.Error.Code)
+}
+
 // NewClient returns QSAN client with given URL
 func NewClient(ip string, opts ClientOptions) *Client {
 	client := &Client{
@@ -110,11 +120,14 @@ func (c *Client) NewRequest(ctx context.Context, method, urlPath string, body in
 }
 
 func (c *AuthClient) SendRequest(ctx context.Context, req *http.Request, v interface{}) error {
+	resterr := RestError{}
 	res, err := c.doSendRequest(ctx, req, v)
 	if err != nil {
-		return err
+		resterr.Err = err
+		return &resterr
 	}
 
+	resterr.StatusCode = res.StatusCode
 	if res.StatusCode == 401 {
 		res.Body.Close()
 
@@ -122,7 +135,8 @@ func (c *AuthClient) SendRequest(ctx context.Context, req *http.Request, v inter
 		glog.V(2).Infof("[AuthSendRequest] generate new access token. (%s%s)\n", req.Host, req.URL.Path)
 		authRes, err := c.genAccessToken(ctx, c.refreshToken)
 		if err != nil {
-			return fmt.Errorf("genAccessToken failed: %v\n", err)
+			resterr.Err = fmt.Errorf("genAccessToken failed: %v\n", err)
+			return &resterr
 		}
 
 		// Update new access token then send request again
@@ -137,17 +151,20 @@ func (c *AuthClient) SendRequest(ctx context.Context, req *http.Request, v inter
 	if res.StatusCode != http.StatusOK {
 		errRes := errorResponse{}
 		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
-			return errors.New(errRes.Error.Message)
+			resterr.ErrResp = errRes
+			return &resterr
 		}
 
-		return fmt.Errorf("unknown error, status code: %d", res.StatusCode)
+		resterr.Err = fmt.Errorf("unknown error, status code: %d", res.StatusCode)
+		return &resterr
 	}
 
 	if err = json.NewDecoder(res.Body).Decode(v); err != nil {
-		return err
+		resterr.Err = err
+		return &resterr
 	}
 
-	return err
+	return nil
 
 }
 

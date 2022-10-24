@@ -63,30 +63,38 @@ func NewVolume(client *AuthClient) *VolumeOp {
 	return &VolumeOp{client}
 }
 
-// ListVolumes list all volumes or a dedicated volume with volId
-func (v *VolumeOp) ListVolumes(ctx context.Context, volId string) (*[]VolumeData, error) {
+// ListVolumes list all volumes
+func (v *VolumeOp) ListVolumes(ctx context.Context) (*[]VolumeData, error) {
+
+	req, err := v.client.NewRequest(ctx, http.MethodGet, "/rest/v2/storage/block/volumes", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	res := []VolumeData{}
+	if err := v.client.SendRequest(ctx, req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+// ListVolumeByID list a dedicated volume with volId
+func (v *VolumeOp) ListVolumeByID(ctx context.Context, volId string) (*VolumeData, error) {
 
 	req, err := v.client.NewRequest(ctx, http.MethodGet, "/rest/v2/storage/block/volumes/"+volId, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if volId == "" {
-		//list All volumes
-		res := []VolumeData{}
-		if err := v.client.SendRequest(ctx, req, &res); err != nil {
-			return nil, err
-		}
-		return &res, nil
-	} else {
-		//list certain volume
-		singleres := VolumeData{}
-		if err := v.client.SendRequest(ctx, req, &singleres); err != nil {
-			return nil, err
-		}
-		res := []VolumeData{singleres}
-		return &res, nil
+	res := VolumeData{}
+	if err := v.client.SendRequest(ctx, req, &res); err != nil {
+		// resterr, ok := err.(*RestError)
+		// if ok {
+		// 	fmt.Printf("[ListVolumeByID] StatusCode=%d ErrResp=%+v\n", resterr.StatusCode, resterr.ErrResp)
+		// }
+		return nil, err
 	}
+	return &res, nil
 }
 
 // list volumes under given PoolID
