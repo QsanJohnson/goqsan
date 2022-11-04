@@ -40,7 +40,7 @@ type VolumeData struct {
 
 type VolumeCreateOptions struct {
 	Name            string `json:"name"`
-	UsedSize        uint64 `json:"usedSize"`
+	TotalSize       uint64 `json:"totalSize"`
 	BlockSize       uint64 `json:"blockSize"`
 	PoolID          string `json:"poolId"`
 	IoPriority      string `json:"ioPriority,omitempty"`
@@ -51,7 +51,7 @@ type VolumeCreateOptions struct {
 
 type VolumeModifyOptions struct {
 	Name            string `json:"name,omitempty"`
-	UsedSize        uint64 `json:"usedSize,omitempty"`
+	TotalSize       uint64 `json:"totalSize,omitempty"`
 	IoPriority      string `json:"ioPriority,omitempty"`
 	BgIoPriority    string `json:"bgIoPriority,omitempty"`
 	CacheMode       string `json:"cacheMode,omitempty"`
@@ -117,7 +117,7 @@ func (v *VolumeOp) CreateVolume(ctx context.Context, poolID, volname string, vol
 
 	options.PoolID = poolID
 	options.Name = volname
-	options.UsedSize = volsize
+	options.TotalSize = volsize
 
 	rawdata, _ := json.Marshal(options)
 	req, err := v.client.NewRequest(ctx, http.MethodPost, "/rest/v2/storage/block/volumes", string(rawdata))

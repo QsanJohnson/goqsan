@@ -19,7 +19,7 @@ func TestTarget(t *testing.T) {
 	paramV := VolumeCreateOptions{
 		Name:         volName,
 		BlockSize:    4096,
-		UsedSize:     12288,
+		TotalSize:    12288,
 		PoolID:       testConf.poolId,
 		IoPriority:   "HIGH",
 		BgIoPriority: "HIGH",
@@ -27,7 +27,7 @@ func TestTarget(t *testing.T) {
 	}
 
 	//create volume
-	vol, err := testConf.volumeOp.CreateVolume(ctx, paramV.PoolID, paramV.Name, paramV.UsedSize, &paramV)
+	vol, err := testConf.volumeOp.CreateVolume(ctx, paramV.PoolID, paramV.Name, paramV.TotalSize, &paramV)
 	if err != nil {
 		t.Fatalf("createVolume failed: %v", err)
 	}

@@ -86,7 +86,7 @@ func listTest(t *testing.T) {
 }
 
 func createDeleteVolumeTest(t *testing.T, poolID, volname string, volsize uint64, options *VolumeCreateOptions) {
-	fmt.Printf("createDeleteVolumeTest Enter (volSize: %d,  %+v )\n", options.UsedSize, *options)
+	fmt.Printf("createDeleteVolumeTest Enter (volSize: %d,  %+v )\n", options.TotalSize, *options)
 
 	//create volume
 	vol, err := testConf.volumeOp.CreateVolume(ctx, poolID, volname, volsize, options)
@@ -137,7 +137,7 @@ func modifyVolumeTest(t *testing.T, poolID, volname string, volsize uint64, opti
 
 	readahead := true
 	param := &VolumeModifyOptions{
-		UsedSize:        20480,
+		TotalSize:       20480,
 		CacheMode:       "WRITE_THROUGH",
 		EnableReadAhead: &readahead,
 	}
@@ -148,8 +148,8 @@ func modifyVolumeTest(t *testing.T, poolID, volname string, volsize uint64, opti
 	fmt.Printf("  A volume was modified. %+v \n", volMod)
 
 	// check volume data after mod
-	if volMod.UsedSize != param.UsedSize {
-		t.Fatalf("modifyVolume change UsedSize failed. \n")
+	if volMod.TotalSize != param.TotalSize {
+		t.Fatalf("modifyVolume change TotalSize failed. \n")
 	}
 	if volMod.CacheMode != param.CacheMode {
 		t.Fatalf("modifyVolume change CacheMode failed. \n")
