@@ -4,6 +4,7 @@ package goqsan
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,6 +14,11 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+)
+
+const (
+	defaultHttpPort  = 80
+	defaultHttpsPort = 443
 )
 
 // QSAN client without authentication
@@ -25,6 +31,7 @@ type Client struct {
 // ClientOptions are options for QSAN http client.
 type ClientOptions struct {
 	Https      bool
+	Port       int
 	ReqTimeout time.Duration
 }
 
@@ -64,16 +71,34 @@ func (r *RestError) Error() string {
 
 // NewClient returns QSAN client with given URL
 func NewClient(ip string, opts ClientOptions) *Client {
-	client := &Client{
-		HTTPClient: &http.Client{},
-		baseURL:    "http://" + ip,
+	client := &Client{}
+	if opts.Https {
+		port := defaultHttpsPort
+		if opts.Port != 0 {
+			port = opts.Port
+		}
+
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		client = &Client{
+			HTTPClient: &http.Client{Transport: tr},
+			baseURL:    fmt.Sprintf("https://%s:%d", ip, port),
+		}
+	} else {
+		port := defaultHttpPort
+		if opts.Port != 0 {
+			port = opts.Port
+		}
+
+		client = &Client{
+			HTTPClient: &http.Client{},
+			baseURL:    fmt.Sprintf("http://%s:%d", ip, port),
+		}
 	}
 
 	if opts.ReqTimeout != 0 {
 		client.HTTPClient.Timeout = opts.ReqTimeout
-	}
-
-	if opts.Https {
 	}
 
 	return client

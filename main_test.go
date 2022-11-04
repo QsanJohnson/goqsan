@@ -67,6 +67,7 @@ func TestMain(m *testing.M) {
 }
 
 func getTestClient(ip string) *Client {
+	// opt := ClientOptions{ReqTimeout: 60 * time.Second, Https: true, Port: 443}
 	opt := ClientOptions{ReqTimeout: 60 * time.Second}
 	return NewClient(ip, opt)
 }
