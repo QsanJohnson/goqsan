@@ -58,6 +58,13 @@ type VolumeModifyOptions struct {
 	EnableReadAhead *bool  `json:"enableReadAhead,omitempty"`
 }
 
+//return value of GET /rest/v2/storage/qos/volumes
+//Patch /rest/v2/storage/qos/volumes
+type QoSData struct {
+	EnableQos bool   `json:"enableQos"`
+	QosRule   string `json:"qosRule"`
+}
+
 // NewVolume returns volume operation
 func NewVolume(client *AuthClient) *VolumeOp {
 	return &VolumeOp{client}
@@ -159,5 +166,38 @@ func (v *VolumeOp) ModifyVolume(ctx context.Context, volId string, options *Volu
 		return nil, err
 	}
 
+	return &res, nil
+}
+
+func (v *VolumeOp) GetQoS(ctx context.Context) (*QoSData, error) {
+
+	req, err := v.client.NewRequest(ctx, http.MethodGet, "/rest/v2/storage/qos/volumes", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	res := QoSData{}
+	if err := v.client.SendRequest(ctx, req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (v *VolumeOp) PatchQoS(ctx context.Context, qosEnable bool, qosRule string) (*QoSData, error) {
+
+	options := QoSData{}
+	options.EnableQos = qosEnable
+	options.QosRule = qosRule
+
+	rawdata, _ := json.Marshal(options)
+	req, err := v.client.NewRequest(ctx, http.MethodPatch, "/rest/v2/storage/qos/volumes", string(rawdata))
+	if err != nil {
+		return nil, err
+	}
+
+	res := QoSData{}
+	if err := v.client.SendRequest(ctx, req, &res); err != nil {
+		return nil, err
+	}
 	return &res, nil
 }

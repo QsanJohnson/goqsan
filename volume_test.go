@@ -43,6 +43,10 @@ func TestVolume(t *testing.T) {
 	volName = "gotest-vol-" + timeStamp
 	modifyVolumeTest(t, testConf.poolId, volName, 10240, &paramCVol)
 
+	qosTest(t, true, "IO_PRIORITY")
+	qosTest(t, false, "IO_PRIORITY")
+	qosTest(t, true, "MAX_IOPS_THROUGHPUT")
+
 }
 
 func listTest(t *testing.T) {
@@ -197,4 +201,41 @@ func modifyVolumeTest(t *testing.T, poolID, volname string, volsize uint64, opti
 	fmt.Printf("  A volume was deleted. Id:%s\n", vol.ID)
 
 	fmt.Println("ModifyVolumeTest Leave")
+}
+
+func qosTest(t *testing.T, qosEnable bool, qosRule string) {
+	fmt.Println("QoSTest Enter")
+
+	fmt.Println("Get QoS now.")
+	qosdata, err := testConf.volumeOp.GetQoS(ctx)
+	if err != nil {
+		t.Fatalf("Getqos failed: %v", err)
+	}
+	fmt.Printf("QoS: %+v \n", qosdata)
+
+	fmt.Println("Patch QoS now.")
+	qosdata, err = testConf.volumeOp.PatchQoS(ctx, qosEnable, qosRule)
+	if err != nil {
+		t.Fatalf("PatchQoS failed: %v", err)
+	}
+	fmt.Printf("Patched QoS: %+v \n", qosdata)
+
+	//check if Patch QoS is working
+	if qosEnable == false {
+		if qosdata.EnableQos != qosEnable {
+			t.Fatalf("Patch enableQos failed! Input is %t,and QoS enableQos is %t. \n", qosEnable, qosdata.EnableQos)
+		}
+		if qosdata.QosRule != "NONE" {
+			t.Fatalf("Patch QosRule failed.QoS qosRule should be \"NONE\",but it return %s.\n", qosdata.QosRule)
+		}
+	} else if qosEnable == true {
+		if qosdata.EnableQos != qosEnable {
+			t.Fatalf("Patch enableQos failed! Input is %t,and QoS enableQos is %t. \n", qosEnable, qosdata.EnableQos)
+		}
+		if qosdata.QosRule != qosRule {
+			t.Fatalf("Patch enableQos failed! Input is %s,and QoS qosRule is %s. \n", qosRule, qosdata.QosRule)
+		}
+	}
+
+	fmt.Println("QoSTest Leave")
 }
