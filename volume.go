@@ -32,6 +32,9 @@ type VolumeData struct {
 	EnableReadAhead       bool   `json:"enableReadAhead"`
 	EraseData             string `json:"eraseData"`
 	EnableFastRaidRebuild bool   `json:"enableFastRaidRebuild"`
+	TargetResponseTime    uint64 `json:"targetResponseTime"`
+	MaxIops               uint64 `json:"maxIops"`
+	MaxThroughtput        uint64 `json:"maxThroughtput"`
 	Tags                  struct {
 		Wwn  string `json:"wwn"`
 		Type string `json:"type"`
@@ -49,14 +52,33 @@ type VolumeCreateOptions struct {
 	EnableReadAhead *bool  `json:"enableReadAhead,omitempty"`
 }
 
-type VolumeModifyOptions struct {
-	Name            string `json:"name,omitempty"`
-	TotalSize       uint64 `json:"totalSize,omitempty"`
-	IoPriority      string `json:"ioPriority,omitempty"`
-	BgIoPriority    string `json:"bgIoPriority,omitempty"`
-	CacheMode       string `json:"cacheMode,omitempty"`
-	EnableReadAhead *bool  `json:"enableReadAhead,omitempty"`
+//Patch /rest/v2/storage/block/volumes/_volumes
+type Tag struct {
+	Type string `json:"type"`
 }
+
+//Patch /rest/v2/storage/block/volumes/_volumes
+type VolumeModifyOptions struct {
+	Name               string `json:"name,omitempty"`
+	TotalSize          uint64 `json:"totalSize,omitempty"`
+	IoPriority         string `json:"ioPriority,omitempty"`
+	BgIoPriority       string `json:"bgIoPriority,omitempty"`
+	CacheMode          string `json:"cacheMode,omitempty"`
+	EnableReadAhead    *bool  `json:"enableReadAhead,omitempty"`
+	TargetResponseTime uint64 `json:"targetResponseTime,omitempty"`
+	MaxIops            uint64 `json:"maxIops,omitempty"`
+	MaxThroughtput     uint64 `json:"maxThroughtput,omitempty"`
+	Tags               []Tag  `json:"tags,omitempty"`
+}
+
+// type VolumeModifyOptions struct {
+// 	Name            string `json:"name,omitempty"`
+// 	TotalSize       uint64 `json:"totalSize,omitempty"`
+// 	IoPriority      string `json:"ioPriority,omitempty"`
+// 	BgIoPriority    string `json:"bgIoPriority,omitempty"`
+// 	CacheMode       string `json:"cacheMode,omitempty"`
+// 	EnableReadAhead *bool  `json:"enableReadAhead,omitempty"`
+// }
 
 //return value of GET /rest/v2/storage/qos/volumes
 //Patch /rest/v2/storage/qos/volumes

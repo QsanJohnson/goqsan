@@ -25,6 +25,15 @@ func TestVolume(t *testing.T) {
 		EnableReadAhead: &FALSE,
 	}
 
+	//patch QoS settings
+	//IoPriority needs to be "HIGH",in order to make TargetResponseTime value apply to the machine.
+	paramPVolQoS := VolumeModifyOptions{
+		IoPriority:         "HIGH",
+		TargetResponseTime: 123,
+		MaxIops:            1234,
+		MaxThroughtput:     1234,
+	}
+
 	// options2 := VolumeModifyOptions{
 	// 	Name:                 "afterMod",
 	// 	IoPriority:           "MEDIUM",
@@ -42,6 +51,8 @@ func TestVolume(t *testing.T) {
 	timeStamp = now.Format("20060102150405")
 	volName = "gotest-vol-" + timeStamp
 	modifyVolumeTest(t, testConf.poolId, volName, 10240, &paramCVol)
+
+	modifyQoSTest(t, testConf.poolId, volName, 10240, &paramCVol, &paramPVolQoS)
 
 	qosTest(t, true, "IO_PRIORITY")
 	qosTest(t, false, "IO_PRIORITY")
@@ -201,6 +212,49 @@ func modifyVolumeTest(t *testing.T, poolID, volname string, volsize uint64, opti
 	fmt.Printf("  A volume was deleted. Id:%s\n", vol.ID)
 
 	fmt.Println("ModifyVolumeTest Leave")
+}
+
+func modifyQoSTest(t *testing.T, poolID, volname string, volsize uint64, optionsV *VolumeCreateOptions, optionsQ *VolumeModifyOptions) {
+	fmt.Println("ModifyQoSTest Enter")
+
+	// create volume
+	vol, err := testConf.volumeOp.CreateVolume(ctx, poolID, volname, volsize, optionsV)
+	if err != nil {
+		t.Fatalf("createVolume failed: %v", err)
+	}
+	fmt.Printf("  A volume was created. Id:%s \n", vol.ID)
+
+	volMod, err := testConf.volumeOp.ModifyVolume(ctx, vol.ID, optionsQ)
+	if err != nil {
+		t.Fatalf("modifyQoS failed: %v", err)
+	}
+	fmt.Printf("  A volume's QoS was modified. %+v \n", volMod)
+
+	// check volume QoS after mod
+	if volMod.IoPriority != optionsQ.IoPriority {
+		t.Fatalf("modifyQoS change IoPriority failed. \n")
+	}
+	if volMod.TargetResponseTime != optionsQ.TargetResponseTime {
+		t.Fatalf("modifyQoS change TargetResponseTime failed. \n")
+	}
+	if volMod.MaxIops != optionsQ.MaxIops {
+		t.Fatalf("modifyQoS change MaxIops failed. \n")
+	}
+	if volMod.MaxThroughtput != optionsQ.MaxThroughtput {
+		t.Fatalf("modifyQoS change MaxThroughtput failed. \n")
+	}
+
+	fmt.Printf("  Sleep 5 seconds\n")
+	time.Sleep(5 * time.Second)
+
+	//delete volume
+	err = testConf.volumeOp.DeleteVolume(ctx, vol.ID)
+	if err != nil {
+		t.Fatalf("DeleteVolume failed: %v", err)
+	}
+	fmt.Printf("  A volume was deleted. Id:%s\n", vol.ID)
+
+	fmt.Println("ModifyQoSTest Leave")
 }
 
 func qosTest(t *testing.T, qosEnable bool, qosRule string) {
