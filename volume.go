@@ -54,7 +54,7 @@ type VolumeCreateOptions struct {
 
 //Patch /rest/v2/storage/block/volumes/_volumes
 type Tag struct {
-	Type string `json:"type"`
+	Type string `json:"type,omitempty"`
 }
 
 //Patch /rest/v2/storage/block/volumes/_volumes
@@ -68,7 +68,7 @@ type VolumeModifyOptions struct {
 	TargetResponseTime uint64 `json:"targetResponseTime,omitempty"`
 	MaxIops            uint64 `json:"maxIops,omitempty"`
 	MaxThroughtput     uint64 `json:"maxThroughtput,omitempty"`
-	Tags               []Tag  `json:"tags,omitempty"`
+	Tags               Tag    `json:"tags,omitempty"`
 }
 
 // type VolumeModifyOptions struct {
