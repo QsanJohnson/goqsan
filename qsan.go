@@ -38,6 +38,7 @@ type ClientOptions struct {
 // QSAN client with authentication
 type AuthClient struct {
 	Client
+	user, passwd string
 	accessToken  string
 	refreshToken string
 }
@@ -60,13 +61,14 @@ type errorResponse struct {
 }
 
 type RestError struct {
+	ReqUrl     string
 	StatusCode int
 	ErrResp    errorResponse
 	Err        error
 }
 
 func (r *RestError) Error() string {
-	return fmt.Sprintf("status %d: %v (%d)", r.StatusCode, r.ErrResp.Error.Message, r.ErrResp.Error.Code)
+	return fmt.Sprintf("[%s] status %d: %v (%d)", r.ReqUrl, r.StatusCode, r.ErrResp.Error.Message, r.ErrResp.Error.Code)
 }
 
 // NewClient returns QSAN client with given URL
@@ -145,7 +147,7 @@ func (c *Client) NewRequest(ctx context.Context, method, urlPath string, body in
 }
 
 func (c *AuthClient) SendRequest(ctx context.Context, req *http.Request, v interface{}) error {
-	resterr := RestError{}
+	resterr := RestError{ReqUrl: req.Host + req.URL.Path}
 	res, err := c.doSendRequest(ctx, req, v)
 	if err != nil {
 		resterr.Err = err
@@ -156,19 +158,44 @@ func (c *AuthClient) SendRequest(ctx context.Context, req *http.Request, v inter
 	if res.StatusCode == 401 {
 		res.Body.Close()
 
-		// When the existing access token expired, generate a new access token.
-		glog.V(2).Infof("[AuthSendRequest] generate new access token. (%s%s)\n", req.Host, req.URL.Path)
-		authRes, err := c.genAccessToken(ctx, c.refreshToken)
-		if err != nil {
-			resterr.Err = fmt.Errorf("genAccessToken failed: %v\n", err)
-			return &resterr
+		if req.URL.Path != "/auth/refresh" {
+			// When the existing access token expired, generate a new access token.
+			glog.V(2).Infof("[AuthSendRequest] generate new access token. (%s%s)\n", req.Host, req.URL.Path)
+			authRes, err := c.genAccessToken(ctx, c.refreshToken)
+			if err != nil {
+				resterr.Err = fmt.Errorf("genAccessToken failed: %v\n", err)
+				return &resterr
+			}
+
+			// Update new access token then send request again
+			c.accessToken = authRes.AccessToken
+			c.apiKey = authRes.AccessToken
+			glog.V(2).Infof("[AuthSendRequest] SendRequest again (%s%s)\n", req.Host, req.URL.Path)
+			res, err = c.doSendRequest(ctx, req, v)
+		} else {
+			// When refresh token expired, renew a new access token and refresh token.
+			glog.V(2).Infof("[AuthSendRequest] renew new access token and refresh token.\n")
+			res, err := c.login(ctx, c.user, c.passwd)
+			if err != nil {
+				resterr.Err = fmt.Errorf("renew access token failed: %v\n", err)
+				return &resterr
+			}
+
+			// Update new access token and refresh token
+			c.accessToken = res.AccessToken
+			c.apiKey = res.AccessToken
+			c.refreshToken = res.RefreshToken
+
+			authRes, ok := v.(*AuthRes)
+			if ok {
+				*authRes = *res
+			} else {
+				glog.Errorf("[AuthSendRequest] Should no be here. (%s%s)\n", req.Host, req.URL.Path)
+			}
+
+			return nil
 		}
 
-		// Update new access token then send request again
-		c.accessToken = authRes.AccessToken
-		c.apiKey = authRes.AccessToken
-		glog.V(2).Infof("[AuthSendRequest] SendRequest again (%s%s)\n", req.Host, req.URL.Path)
-		res, err = c.doSendRequest(ctx, req, v)
 	}
 
 	defer res.Body.Close()
@@ -255,7 +282,7 @@ func (c *Client) login(ctx context.Context, user string, passwd string) (*AuthRe
 }
 
 // Generate a new access token from refresh token
-func (c *Client) genAccessToken(ctx context.Context, t string) (*AuthRes, error) {
+func (c *AuthClient) genAccessToken(ctx context.Context, t string) (*AuthRes, error) {
 	params := url.Values{}
 	params.Add("refreshToken", t)
 
@@ -286,6 +313,8 @@ func (c *Client) GetAuthClient(ctx context.Context, user string, passwd string) 
 			baseURL:    c.baseURL,
 			HTTPClient: c.HTTPClient,
 		},
+		user:         user,
+		passwd:       passwd,
 		accessToken:  res.AccessToken,
 		refreshToken: res.RefreshToken,
 	}, nil
