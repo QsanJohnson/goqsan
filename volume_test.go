@@ -28,10 +28,12 @@ func TestVolume(t *testing.T) {
 	//patch QoS settings
 	//IoPriority needs to be "HIGH",in order to make TargetResponseTime value apply to the machine.
 	paramPVolQoS := VolumeModifyOptions{
-		IoPriority:         "HIGH",
-		TargetResponseTime: 123,
-		MaxIops:            1234,
-		MaxThroughtput:     1234,
+		VolumeQoSOptions: VolumeQoSOptions{
+			IoPriority:         "HIGH",
+			TargetResponseTime: 123,
+			MaxIops:            1234,
+			MaxThroughtput:     1234,
+		},
 	}
 
 	// options2 := VolumeModifyOptions{
@@ -175,10 +177,10 @@ func modifyVolumeTest(t *testing.T, poolID, volname string, volsize uint64, opti
 
 	readahead = false
 	param = &VolumeModifyOptions{
-		Name:            "afterModRaw131",
-		IoPriority:      "MEDIUM",
-		BgIoPriority:    "LOW",
-		EnableReadAhead: &readahead,
+		Name:             "afterModRaw131",
+		VolumeQoSOptions: VolumeQoSOptions{IoPriority: "MEDIUM"},
+		BgIoPriority:     "LOW",
+		EnableReadAhead:  &readahead,
 	}
 	volMod, err = testConf.volumeOp.ModifyVolume(ctx, vol.ID, param)
 	if err != nil {

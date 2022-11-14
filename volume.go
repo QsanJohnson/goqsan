@@ -57,18 +57,22 @@ type Tag struct {
 	Type string `json:"type,omitempty"`
 }
 
-//Patch /rest/v2/storage/block/volumes/_volumes
-type VolumeModifyOptions struct {
-	Name               string `json:"name,omitempty"`
-	TotalSize          uint64 `json:"totalSize,omitempty"`
+type VolumeQoSOptions struct {
 	IoPriority         string `json:"ioPriority,omitempty"`
-	BgIoPriority       string `json:"bgIoPriority,omitempty"`
-	CacheMode          string `json:"cacheMode,omitempty"`
-	EnableReadAhead    *bool  `json:"enableReadAhead,omitempty"`
 	TargetResponseTime uint64 `json:"targetResponseTime,omitempty"`
 	MaxIops            uint64 `json:"maxIops,omitempty"`
 	MaxThroughtput     uint64 `json:"maxThroughtput,omitempty"`
-	Tags               Tag    `json:"tags,omitempty"`
+}
+
+//Patch /rest/v2/storage/block/volumes/_volumes
+type VolumeModifyOptions struct {
+	VolumeQoSOptions
+	Name            string `json:"name,omitempty"`
+	TotalSize       uint64 `json:"totalSize,omitempty"`
+	BgIoPriority    string `json:"bgIoPriority,omitempty"`
+	CacheMode       string `json:"cacheMode,omitempty"`
+	EnableReadAhead *bool  `json:"enableReadAhead,omitempty"`
+	Tags            Tag    `json:"tags,omitempty"`
 }
 
 // type VolumeModifyOptions struct {
