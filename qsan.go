@@ -203,15 +203,18 @@ func (c *AuthClient) SendRequest(ctx context.Context, req *http.Request, v inter
 	if res.StatusCode != http.StatusOK {
 		errRes := errorResponse{}
 		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
+			glog.Warningf("[AuthSendRequest] %s%s, StatusCode(%d) errRes: %+v\n", req.Host, req.URL.Path, res.StatusCode, errRes)
 			resterr.ErrResp = errRes
 			return &resterr
+		} else {
+			glog.Warningf("[AuthSendRequest] %s%s, StatusCode(%d) err: %+v\n", req.Host, req.URL.Path, res.StatusCode, err)
+			resterr.Err = fmt.Errorf("unknown error, status code: %d", res.StatusCode)
+			return &resterr
 		}
-
-		resterr.Err = fmt.Errorf("unknown error, status code: %d", res.StatusCode)
-		return &resterr
 	}
 
 	if err = json.NewDecoder(res.Body).Decode(v); err != nil {
+		glog.Warningf("[AuthSendRequest] %s%s, err: %+v\n", req.Host, req.URL.Path, err)
 		resterr.Err = err
 		return &resterr
 	}
