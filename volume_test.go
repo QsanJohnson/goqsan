@@ -47,15 +47,6 @@ func TestVolume(t *testing.T) {
 	// 	EnableReadAhead: &TRUE,
 	// }
 
-	// create snapshot name
-	paramSnapName := VolumeSnapshotName{
-		Name: "kyle_snap1",
-	}
-	// assign snapshot space
-	paramSnapSpace := VolumeSnapshotPatchSetting{
-		TotalSize: 20480,
-	}
-
 	//create, list, delete
 	now := time.Now()
 	timeStamp := now.Format("20060102150405")
@@ -83,7 +74,7 @@ func TestVolume(t *testing.T) {
 	now = time.Now()
 	timeStamp = now.Format("20060102150405")
 	volName = "gotest-vol-" + timeStamp
-	snapshotTest(t, testConf.poolId, volName, 10240, &paramCVol, &paramSnapSpace, &paramSnapName)
+	snapshotTest(t, testConf.poolId, volName, 10240, &paramCVol)
 
 }
 
@@ -172,7 +163,7 @@ func metaDataTest(t *testing.T, poolID, volname string, volsize uint64, options 
 	metabyte := []byte{48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64}
 	metabyte64 := b64.StdEncoding.EncodeToString(metabyte)
 
-	options.Metadata = Metadata{
+	options.Metadata = VolumeMetadata{
 		Status:  "VALID",
 		Type:    "CSI Driver",
 		Content: metabyte64,
@@ -213,7 +204,7 @@ func metaDataTest(t *testing.T, poolID, volname string, volsize uint64, options 
 		t.Fatalf("metaDataTest failed. err: %v", err)
 	}
 
-	tstamp, err := testConf.volumeOp.PatchMetadataTimestamp(ctx, vol.ID, "AUTO")
+	tstamp, err := testConf.volumeOp.SetTimestamp(ctx, vol.ID, "AUTO")
 	if err != nil {
 		t.Fatalf("Update Timestamp failed: %v", err)
 	}
@@ -224,7 +215,7 @@ func metaDataTest(t *testing.T, poolID, volname string, volsize uint64, options 
 	fmt.Printf("  Sleep %d seconds\n", sleepSec)
 	time.Sleep(time.Duration(sleepSec) * time.Second)
 
-	tstamp2, err := testConf.volumeOp.PatchMetadataTimestamp(ctx, vol.ID, "AUTO")
+	tstamp2, err := testConf.volumeOp.SetTimestamp(ctx, vol.ID, "AUTO")
 	if err != nil {
 		t.Fatalf("Update Timestamp failed: %v", err)
 	}
@@ -252,9 +243,9 @@ func testMetaData(volId string, buf []byte) error {
 	testType := "CSI Driver"
 
 	fmt.Printf("  testMetaData with buff: %v\n", buf)
-	metaStatus, metaType, metaContent, err := testConf.volumeOp.PatchMetadata(ctx, volId, testStatus, testType, buf)
+	metaStatus, metaType, metaContent, err := testConf.volumeOp.SetMetadata(ctx, volId, testStatus, testType, buf)
 	if err != nil {
-		return fmt.Errorf("testMetaData failed on PatchMetadata(%s, %s, %v), err: %v", testStatus, testType, buf, err)
+		return fmt.Errorf("testMetaData failed on SetMetadata(%s, %s, %v), err: %v", testStatus, testType, buf, err)
 	}
 	metaStatus2, metaType2, metaContent2, err := testConf.volumeOp.GetMetadata(ctx, volId)
 	if testStatus != metaStatus || metaStatus != metaStatus2 {
@@ -400,12 +391,12 @@ func qosTest(t *testing.T, qosEnable bool, qosRule string) {
 	}
 	fmt.Printf("QoS: %+v \n", qosdata)
 
-	fmt.Println("Patch QoS now.")
-	qosdata, err = testConf.volumeOp.PatchQoS(ctx, qosEnable, qosRule)
+	fmt.Println("Set QoS now.")
+	qosdata, err = testConf.volumeOp.SetQoS(ctx, qosEnable, qosRule)
 	if err != nil {
-		t.Fatalf("PatchQoS failed: %v", err)
+		t.Fatalf("SetQoS failed: %v", err)
 	}
-	fmt.Printf("Patched QoS: %+v \n", qosdata)
+	fmt.Printf("Set QoS: %+v \n", qosdata)
 
 	//check if Patch QoS is working
 	if qosEnable == false {
@@ -427,9 +418,8 @@ func qosTest(t *testing.T, qosEnable bool, qosRule string) {
 	fmt.Println("QoSTest Leave")
 }
 
-func snapshotTest(t *testing.T, poolID, volname string, volsize uint64, optionsV *VolumeCreateOptions, optionsSP *VolumeSnapshotPatchSetting, optionsSN *VolumeSnapshotName) {
+func snapshotTest(t *testing.T, poolID, volname string, volsize uint64, optionsV *VolumeCreateOptions) {
 	fmt.Printf("snapshotTest Enter \n")
-	fmt.Printf("createVolume (volSize: %d,  %+v )\n", optionsV.TotalSize, *optionsV)
 
 	//create volume
 	vol, err := testConf.volumeOp.CreateVolume(ctx, poolID, volname, volsize, optionsV)
@@ -442,7 +432,7 @@ func snapshotTest(t *testing.T, poolID, volname string, volsize uint64, optionsV
 	time.Sleep(10 * time.Second)
 
 	//get volume snapshot settings
-	snapSet, err := testConf.volumeOp.GetVolumeSnapshotSetting(ctx, vol.ID)
+	snapSet, err := testConf.volumeOp.GetSnapshotSetting(ctx, vol.ID)
 	if err != nil {
 		t.Fatalf("Get volume snapshot setting failed: %v", err)
 	}
@@ -450,7 +440,10 @@ func snapshotTest(t *testing.T, poolID, volname string, volsize uint64, optionsV
 
 	//enable snapshot center and assign space
 	//patch volume snapshot settings
-	snapPat, err := testConf.volumeOp.PatchVolumeSnapshotSetting(ctx, vol.ID, optionsSP)
+	optionsSP := &SnapshotMutableSetting{
+		TotalSize: 20480,
+	}
+	snapPat, err := testConf.volumeOp.SetSnapshotSetting(ctx, vol.ID, optionsSP)
 	if err != nil {
 		t.Fatalf("Enable snapshot center failed: %v", err)
 	}
@@ -460,14 +453,15 @@ func snapshotTest(t *testing.T, poolID, volname string, volsize uint64, optionsV
 	time.Sleep(5 * time.Second)
 
 	//create volume snapshot
-	snapC, err := testConf.volumeOp.CreateVolumeSnapshotLists(ctx, vol.ID, optionsSN) //need to be changed to body input
+	snapName := "kyle_snap1"
+	snapC, err := testConf.volumeOp.CreateSnapshot(ctx, vol.ID, snapName) //need to be changed to body input
 	if err != nil {
 		t.Fatalf("createVolume snapshot failed: %v", err)
 	}
 	fmt.Printf("  A volume snapshot was created. Snapshot Id:%s \n", snapC.ID)
 
 	//get volume snapshot lists
-	snaplist, err := testConf.volumeOp.GetVolumeSnapshotLists(ctx, vol.ID)
+	snaplist, err := testConf.volumeOp.ListSnapshots(ctx, vol.ID)
 	if err != nil {
 		t.Fatalf("Get volume snapshot lists failed: %v", err)
 	}
@@ -477,16 +471,14 @@ func snapshotTest(t *testing.T, poolID, volname string, volsize uint64, optionsV
 	time.Sleep(3 * time.Second)
 
 	//get certain volume snapshot lists
-	snapName2 := VolumeSnapshotName{
-		Name: "kyle_snap2",
-	}
-	snapC2, err := testConf.volumeOp.CreateVolumeSnapshotLists(ctx, vol.ID, &snapName2) //need to be changed to body input
+	snapName = "kyle_snap2"
+	snapC2, err := testConf.volumeOp.CreateSnapshot(ctx, vol.ID, snapName) //need to be changed to body input
 	if err != nil {
 		t.Fatalf("createVolume snapshot failed: %v", err)
 	}
 	fmt.Printf("  A volume snapshot was created. Snapshot Id:%s \n", snapC2.ID)
 
-	snaplist2, err := testConf.volumeOp.GetVolumeSnapshotList(ctx, vol.ID, snapC2.ID)
+	snaplist2, err := testConf.volumeOp.GetSnapshot(ctx, vol.ID, snapC2.ID)
 	if err != nil {
 		t.Fatalf("Get certain volume snapshot list failed: %v", err)
 	}
@@ -496,12 +488,12 @@ func snapshotTest(t *testing.T, poolID, volname string, volsize uint64, optionsV
 	time.Sleep(5 * time.Second)
 
 	//Rollback to the first snapshot
-	err = testConf.volumeOp.RollbackVolumeSnapshot(ctx, vol.ID, snapC.ID)
+	err = testConf.volumeOp.RollbackSnapshot(ctx, vol.ID, snapC.ID)
 	if err != nil {
 		t.Fatalf("Rollback to first snapshot failed: %v", err)
 	}
 	//check if rollback to first snapshot will delete the rest snapshot
-	snaplist, err = testConf.volumeOp.GetVolumeSnapshotLists(ctx, vol.ID)
+	snaplist, err = testConf.volumeOp.ListSnapshots(ctx, vol.ID)
 	if err != nil {
 		t.Fatalf("Get volume snapshot lists failed: %v", err)
 	}
@@ -515,17 +507,17 @@ func snapshotTest(t *testing.T, poolID, volname string, volsize uint64, optionsV
 
 	//delete snapshot
 	fmt.Println("start delete volume snapshot")
-	err = testConf.volumeOp.DeleteVolumeSnapshots(ctx, vol.ID)
+	err = testConf.volumeOp.DeleteAllSnapshots(ctx, vol.ID)
 	if err != nil {
 		t.Fatalf("Delete Volume snapshots failed: %v", err)
 	}
 	fmt.Printf("  All snapshots were deleted. \n")
 
 	//disable snapshot center
-	optionsDisable := VolumeSnapshotPatchSetting{
+	optionsDisable := SnapshotMutableSetting{
 		TotalSize: 0,
 	}
-	snapPat, err = testConf.volumeOp.PatchVolumeSnapshotSetting(ctx, vol.ID, &optionsDisable)
+	snapPat, err = testConf.volumeOp.SetSnapshotSetting(ctx, vol.ID, &optionsDisable)
 	if err != nil {
 		t.Fatalf("Disable snapshot center failed: %v", err)
 	}

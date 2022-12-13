@@ -14,7 +14,7 @@ type VolumeOp struct {
 	client *AuthClient
 }
 
-type Metadata struct {
+type VolumeMetadata struct {
 	Status    string `json:"status,omitempty"`
 	Type      string `json:"type,omitempty"`
 	Content   string `json:"content,omitempty"`
@@ -48,19 +48,19 @@ type VolumeData struct {
 		Wwn  string `json:"wwn"`
 		Type string `json:"type"`
 	} `json:"tags"`
-	Metadata Metadata `json:"metadata"`
+	Metadata VolumeMetadata `json:"metadata"`
 }
 
 type VolumeCreateOptions struct {
-	Name            string   `json:"name"`
-	TotalSize       uint64   `json:"totalSize"`
-	BlockSize       uint64   `json:"blockSize"`
-	PoolID          string   `json:"poolId"`
-	IoPriority      string   `json:"ioPriority,omitempty"`
-	BgIoPriority    string   `json:"bgIoPriority,omitempty"`
-	CacheMode       string   `json:"cacheMode,omitempty"`
-	EnableReadAhead *bool    `json:"enableReadAhead,omitempty"`
-	Metadata        Metadata `json:"metadata,omitempty"`
+	Name            string         `json:"name"`
+	TotalSize       uint64         `json:"totalSize"`
+	BlockSize       uint64         `json:"blockSize"`
+	PoolID          string         `json:"poolId"`
+	IoPriority      string         `json:"ioPriority,omitempty"`
+	BgIoPriority    string         `json:"bgIoPriority,omitempty"`
+	CacheMode       string         `json:"cacheMode,omitempty"`
+	EnableReadAhead *bool          `json:"enableReadAhead,omitempty"`
+	Metadata        VolumeMetadata `json:"metadata,omitempty"`
 }
 
 //Patch /rest/v2/storage/block/volumes/_volumes
@@ -78,23 +78,14 @@ type VolumeQoSOptions struct {
 //Patch /rest/v2/storage/block/volumes/_volumes
 type VolumeModifyOptions struct {
 	VolumeQoSOptions
-	Name            string   `json:"name,omitempty"`
-	TotalSize       uint64   `json:"totalSize,omitempty"`
-	BgIoPriority    string   `json:"bgIoPriority,omitempty"`
-	CacheMode       string   `json:"cacheMode,omitempty"`
-	EnableReadAhead *bool    `json:"enableReadAhead,omitempty"`
-	Tags            Tag      `json:"tags,omitempty"`
-	Metadata        Metadata `json:"metadata,omitempty"`
+	Name            string         `json:"name,omitempty"`
+	TotalSize       uint64         `json:"totalSize,omitempty"`
+	BgIoPriority    string         `json:"bgIoPriority,omitempty"`
+	CacheMode       string         `json:"cacheMode,omitempty"`
+	EnableReadAhead *bool          `json:"enableReadAhead,omitempty"`
+	Tags            Tag            `json:"tags,omitempty"`
+	Metadata        VolumeMetadata `json:"metadata,omitempty"`
 }
-
-// type VolumeModifyOptions struct {
-// 	Name            string `json:"name,omitempty"`
-// 	TotalSize       uint64 `json:"totalSize,omitempty"`
-// 	IoPriority      string `json:"ioPriority,omitempty"`
-// 	BgIoPriority    string `json:"bgIoPriority,omitempty"`
-// 	CacheMode       string `json:"cacheMode,omitempty"`
-// 	EnableReadAhead *bool  `json:"enableReadAhead,omitempty"`
-// }
 
 //return value of GET /rest/v2/storage/qos/volumes
 //Patch /rest/v2/storage/qos/volumes
@@ -103,69 +94,56 @@ type QoSData struct {
 	QosRule   string `json:"qosRule"`
 }
 
-// NewVolume returns volume operation
-func NewVolume(client *AuthClient) *VolumeOp {
-	return &VolumeOp{client}
+// Patch /rest/v2/backup/snapshot/targets/_volumeID
+type SnapshotMutableSetting struct {
+	ProtectionGroup string `json:"protectionGroup,omitempty"`
+	TotalSize       int    `json:"totalSize,omitempty"`
 }
 
 // return value of GET /rest/v2/backup/snapshot/targets/_volumeID
 // return value of PATCH /rest/v2/backup/snapshot/targets/_volumeID
-type VolSnaphshotSetting struct {
+type SnaphshotSetting struct {
 	Type              string `json:"type"`
 	SnapshotMaxPolicy struct {
 		MaxLimit uint64 `json:"maxLimit"`
 		Policy   string `json:"policy"`
 	} `json:"snapshotMaxPolicy"`
-	ProtectionGroup string `json:"protectionGroup"`
-	TotalSize       uint64 `json:"totalSize"`
-}
-
-// return value of GET /rest/v2/backup/snapshot/targets/_volumeID/snapshots
-// return value of Post /rest/v2/backup/snapshot/targets/_volumeID/snapshots
-// return value of Patch /rest/v2/backup/snapshot/targets/_volumeID/snapshots/_snapshotID
-type VolSnaphshotLists struct {
-	ID         string `json:"id"`
-	Name       string `json:"name"`
-	CreateTime string `json:"createTime"`
-	UsedSize   uint64 `json:"usedSize"`
-	Expose     struct {
-		Enable    bool        `json:"enable"`
-		Mode      interface{} `json:"mode"`
-		WriteSize uint64      `json:"writeSize"`
-	} `json:"expose"`
-	Trash struct {
-		InTrash    bool        `json:"inTrash"`
-		DeleteTime interface{} `json:"deleteTime"`
-	} `json:"trash"`
-}
-
-// Post /rest/v2/backup/snapshot/targets/_volumeID/snapshots
-type VolumeSnapshotName struct {
-	Name string `json:"name,omitempty"`
-}
-
-// Patch /rest/v2/backup/snapshot/targets/_volumeID
-type VolumeSnapshotPatchSetting struct {
-	ProtectionGroup string `json:"protectionGroup,omitempty"`
-	TotalSize       int    `json:"totalSize,omitempty"`
+	SnapshotMutableSetting
 }
 
 // Patch /rest/v2/backup/snapshot/targets/_volumeID/snapshots/_snapshotID
-type ExposeStruct struct {
+type SnapExpose struct {
 	Enable    bool   `json:"enable"`
 	Mode      string `json:"mode"`
 	WriteSize uint64 `json:"writeSize"`
 }
 
 // Patch /rest/v2/backup/snapshot/targets/_volumeID/snapshots/_snapshotID
-type TrashStruct struct {
+type SnapTrash struct {
 	InTrash bool `json:"inTrash"`
 }
 
 // Patch /rest/v2/backup/snapshot/targets/_volumeID/snapshots/_snapshotID
-type VolSnaphshotOptions struct {
-	Expose ExposeStruct `json:"expose"`
-	Trash  TrashStruct  `json:"trash"`
+type SnaphshotOptions struct {
+	Expose SnapExpose `json:"expose"`
+	Trash  SnapTrash  `json:"trash"`
+}
+
+// return value of GET /rest/v2/backup/snapshot/targets/_volumeID/snapshots
+// return value of Post /rest/v2/backup/snapshot/targets/_volumeID/snapshots
+// return value of Patch /rest/v2/backup/snapshot/targets/_volumeID/snapshots/_snapshotID
+type SnaphshotData struct {
+	ID         string     `json:"id"`
+	Name       string     `json:"name"`
+	CreateTime string     `json:"createTime"`
+	UsedSize   uint64     `json:"usedSize"`
+	Expose     SnapExpose `json:"expose"`
+	Trash      SnapTrash  `json:"trash"`
+}
+
+// NewVolume returns volume operation
+func NewVolume(client *AuthClient) *VolumeOp {
+	return &VolumeOp{client}
 }
 
 // ListVolumes list all volumes
@@ -281,7 +259,7 @@ func (v *VolumeOp) GetQoS(ctx context.Context) (*QoSData, error) {
 	return &res, nil
 }
 
-func (v *VolumeOp) PatchQoS(ctx context.Context, qosEnable bool, qosRule string) (*QoSData, error) {
+func (v *VolumeOp) SetQoS(ctx context.Context, qosEnable bool, qosRule string) (*QoSData, error) {
 
 	options := QoSData{}
 	options.EnableQos = qosEnable
@@ -302,14 +280,14 @@ func (v *VolumeOp) PatchQoS(ctx context.Context, qosEnable bool, qosRule string)
 
 // Get Volume snapshot settings
 // GET /rest/v2/backup/snapshot/targets/_volumeID
-func (v *VolumeOp) GetVolumeSnapshotSetting(ctx context.Context, volId string) (*VolSnaphshotSetting, error) {
+func (v *VolumeOp) GetSnapshotSetting(ctx context.Context, volId string) (*SnaphshotSetting, error) {
 
 	req, err := v.client.NewRequest(ctx, http.MethodGet, "/rest/v2/backup/snapshot/targets/"+volId, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	res := VolSnaphshotSetting{}
+	res := SnaphshotSetting{}
 	if err := v.client.SendRequest(ctx, req, &res); err != nil {
 		return nil, err
 	}
@@ -318,7 +296,7 @@ func (v *VolumeOp) GetVolumeSnapshotSetting(ctx context.Context, volId string) (
 
 // Enable snapshot space
 // PATCH /rest/v2/backup/snapshot/targets/_volumeID
-func (v *VolumeOp) PatchVolumeSnapshotSetting(ctx context.Context, volId string, options *VolumeSnapshotPatchSetting) (*VolSnaphshotSetting, error) {
+func (v *VolumeOp) SetSnapshotSetting(ctx context.Context, volId string, options *SnapshotMutableSetting) (*SnaphshotSetting, error) {
 
 	rawdata, _ := json.Marshal(options)
 	req, err := v.client.NewRequest(ctx, http.MethodPatch, "/rest/v2/backup/snapshot/targets/"+volId, string(rawdata))
@@ -326,7 +304,7 @@ func (v *VolumeOp) PatchVolumeSnapshotSetting(ctx context.Context, volId string,
 		return nil, err
 	}
 
-	res := VolSnaphshotSetting{}
+	res := SnaphshotSetting{}
 	if err := v.client.SendRequest(ctx, req, &res); err != nil {
 		return nil, err
 	}
@@ -335,31 +313,31 @@ func (v *VolumeOp) PatchVolumeSnapshotSetting(ctx context.Context, volId string,
 
 // Create volume snapshot
 // POST /rest/v2/backup/snapshot/targets/_volumeID/snapshots/_snapshotName
-func (v *VolumeOp) CreateVolumeSnapshotLists(ctx context.Context, volId string, options *VolumeSnapshotName) (*VolSnaphshotLists, error) {
+func (v *VolumeOp) CreateSnapshot(ctx context.Context, volId, snapeName string) (*SnaphshotData, error) {
 
-	rawdata, _ := json.Marshal(options)
+	rawdata, _ := json.Marshal(snapeName)
 	req, err := v.client.NewRequest(ctx, http.MethodPost, "/rest/v2/backup/snapshot/targets/"+volId+"/snapshots", string(rawdata))
 	if err != nil {
 		return nil, err
 	}
 
-	res := VolSnaphshotLists{}
+	res := SnaphshotData{}
 	if err := v.client.SendRequest(ctx, req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
 }
 
-// Get Volume snapshot lists
+// List all volume snapshots
 // GET /rest/v2/backup/snapshot/targets/_volumeID/snapshots
-func (v *VolumeOp) GetVolumeSnapshotLists(ctx context.Context, volId string) (*[]VolSnaphshotLists, error) {
+func (v *VolumeOp) ListSnapshots(ctx context.Context, volId string) (*[]SnaphshotData, error) {
 
 	req, err := v.client.NewRequest(ctx, http.MethodGet, "/rest/v2/backup/snapshot/targets/"+volId+"/snapshots", nil)
 	if err != nil {
 		return nil, err
 	}
 
-	res := []VolSnaphshotLists{}
+	res := []SnaphshotData{}
 	if err := v.client.SendRequest(ctx, req, &res); err != nil {
 		return nil, err
 	}
@@ -368,14 +346,14 @@ func (v *VolumeOp) GetVolumeSnapshotLists(ctx context.Context, volId string) (*[
 
 // Get Volume certain snapshot list
 // GET /rest/v2/backup/snapshot/targets/_volumeID/snapshots/_snapshotID
-func (v *VolumeOp) GetVolumeSnapshotList(ctx context.Context, volId, snapId string) (*VolSnaphshotLists, error) {
+func (v *VolumeOp) GetSnapshot(ctx context.Context, volId, snapId string) (*SnaphshotData, error) {
 
 	req, err := v.client.NewRequest(ctx, http.MethodGet, "/rest/v2/backup/snapshot/targets/"+volId+"/snapshots/"+snapId, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	res := VolSnaphshotLists{}
+	res := SnaphshotData{}
 	if err := v.client.SendRequest(ctx, req, &res); err != nil {
 		return nil, err
 	}
@@ -384,7 +362,7 @@ func (v *VolumeOp) GetVolumeSnapshotList(ctx context.Context, volId, snapId stri
 
 // Patch certain volume snapshot
 // PATCH /rest/v2/backup/snapshot/targets/_volumeID/snapshots/_snapshotID
-func (v *VolumeOp) PatchVolumeSnapshot(ctx context.Context, volId, snapId string, options *VolSnaphshotOptions) (*[]VolSnaphshotLists, error) {
+func (v *VolumeOp) ModifySnapshot(ctx context.Context, volId, snapId string, options *SnaphshotOptions) (*[]SnaphshotData, error) {
 
 	rawdata, _ := json.Marshal(options)
 	req, err := v.client.NewRequest(ctx, http.MethodPatch, "/rest/v2/backup/snapshot/targets/"+volId+"/snapshots/"+snapId, string(rawdata))
@@ -392,7 +370,7 @@ func (v *VolumeOp) PatchVolumeSnapshot(ctx context.Context, volId, snapId string
 		return nil, err
 	}
 
-	res := []VolSnaphshotLists{}
+	res := []SnaphshotData{}
 	if err := v.client.SendRequest(ctx, req, &res); err != nil {
 		return nil, err
 	}
@@ -402,7 +380,7 @@ func (v *VolumeOp) PatchVolumeSnapshot(ctx context.Context, volId, snapId string
 
 // Rollback to certain volume snapshot
 // POST /rest/v2/backup/snapshot/targets/_volumeID/snapshots/_snapshotID
-func (v *VolumeOp) RollbackVolumeSnapshot(ctx context.Context, volId, snapId string) error {
+func (v *VolumeOp) RollbackSnapshot(ctx context.Context, volId, snapId string) error {
 	req, err := v.client.NewRequest(ctx, http.MethodPost, "/rest/v2/backup/snapshot/targets/"+volId+"/snapshots/"+snapId+"/rollback", nil)
 	if err != nil {
 		return err
@@ -418,7 +396,7 @@ func (v *VolumeOp) RollbackVolumeSnapshot(ctx context.Context, volId, snapId str
 
 // Delete all volume snapshots
 // DELETE /rest/v2/backup/snapshot/targets/_volumeID/snapshots
-func (v *VolumeOp) DeleteVolumeSnapshots(ctx context.Context, volId string) error {
+func (v *VolumeOp) DeleteAllSnapshots(ctx context.Context, volId string) error {
 	req, err := v.client.NewRequest(ctx, http.MethodDelete, "/rest/v2/backup/snapshot/targets/"+volId+"/snapshots", nil)
 	if err != nil {
 		return err
@@ -434,7 +412,7 @@ func (v *VolumeOp) DeleteVolumeSnapshots(ctx context.Context, volId string) erro
 
 // Delete certain volume snapshot
 // DELETE /rest/v2/backup/snapshot/targets/_volumeID/snapshots/_snapshotID
-func (v *VolumeOp) DeleteVolumeSnapshot(ctx context.Context, volId, snapId string) error {
+func (v *VolumeOp) DeleteSnapshot(ctx context.Context, volId, snapId string) error {
 	req, err := v.client.NewRequest(ctx, http.MethodDelete, "/rest/v2/backup/snapshot/targets/"+volId+"/snapshots/"+snapId, nil)
 	if err != nil {
 		return err
@@ -449,7 +427,7 @@ func (v *VolumeOp) DeleteVolumeSnapshot(ctx context.Context, volId, snapId strin
 }
 
 // Get metadata Timestamp
-func (v *VolumeOp) GetMetadataTimestamp(ctx context.Context, volId string) (string, error) {
+func (v *VolumeOp) GetTimestamp(ctx context.Context, volId string) (string, error) {
 
 	req, err := v.client.NewRequest(ctx, http.MethodGet, "/rest/v2/storage/block/volumes/"+volId, nil)
 	if err != nil {
@@ -464,10 +442,10 @@ func (v *VolumeOp) GetMetadataTimestamp(ctx context.Context, volId string) (stri
 }
 
 // update metadata Timestamp
-func (v *VolumeOp) PatchMetadataTimestamp(ctx context.Context, volId, timestamp string) (string, error) {
+func (v *VolumeOp) SetTimestamp(ctx context.Context, volId, timestamp string) (string, error) {
 
 	param := &VolumeModifyOptions{
-		Metadata: Metadata{
+		Metadata: VolumeMetadata{
 			Timestamp: timestamp,
 		},
 	}
@@ -486,7 +464,7 @@ func (v *VolumeOp) PatchMetadataTimestamp(ctx context.Context, volId, timestamp 
 }
 
 // Get metadata
-func (v *VolumeOp) GetMetadata(ctx context.Context, volId string) (string, string, []byte, error) {
+func (v *VolumeOp) GetMetadata(ctx context.Context, volId string) (metastatus, metatype string, metacontent []byte, err error) {
 
 	req, err := v.client.NewRequest(ctx, http.MethodGet, "/rest/v2/storage/block/volumes/"+volId, nil)
 	if err != nil {
@@ -504,11 +482,11 @@ func (v *VolumeOp) GetMetadata(ctx context.Context, volId string) (string, strin
 }
 
 // Update metadata
-func (v *VolumeOp) PatchMetadata(ctx context.Context, volId, metastatus, metatype string, metacontent []byte) (string, string, []byte, error) {
+func (v *VolumeOp) SetMetadata(ctx context.Context, volId, metastatus, metatype string, metacontent []byte) (string, string, []byte, error) {
 
 	metacontent64 := b64.StdEncoding.EncodeToString(metacontent)
 	param := &VolumeModifyOptions{
-		Metadata: Metadata{
+		Metadata: VolumeMetadata{
 			Status:  metastatus,
 			Type:    metatype,
 			Content: metacontent64,

@@ -52,7 +52,7 @@ func TestTarget(t *testing.T) {
 	}
 
 	// patch iSCSI parameter
-	paramPSCSI := PatchTargetParam{
+	paramPSCSI := TargetParam{
 		Name: "kyle_goqsm_PSCSI",
 		Type: "iSCSI",
 		Iscsis: []Iscsi{
@@ -64,7 +64,7 @@ func TestTarget(t *testing.T) {
 	}
 
 	// patch FCP parameter
-	paramPFCP := PatchTargetParam{
+	paramPFCP := TargetParam{
 		Name: "kyle_goqsm_PFCP",
 		Type: "FCP",
 	}
@@ -81,7 +81,7 @@ func TestTarget(t *testing.T) {
 	}
 
 	// lun patch parameter
-	paramPLun := LunPatchParam{
+	paramPLun := LunParam{
 		Name: "5", // Lun number, can choose from 0 to 254
 		Hosts: []Host{
 			{
@@ -144,7 +144,7 @@ func createDeleteTargetTest(t *testing.T, optionsT *CreateTargetParam) {
 }
 
 // create list patch delete
-func createDLPTargetTest(t *testing.T, optionsT *CreateTargetParam, optionsP *PatchTargetParam) {
+func createDLPTargetTest(t *testing.T, optionsT *CreateTargetParam, optionsP *TargetParam) {
 	fmt.Println("createTargetTest Enter")
 
 	//create Target
@@ -162,9 +162,9 @@ func createDLPTargetTest(t *testing.T, optionsT *CreateTargetParam, optionsP *Pa
 	fmt.Printf("  Target ID %v information : %+v\n", tgt.ID, tgt)
 
 	//patch target
-	tgt, err = testConf.targetOp.PatchTarget(ctx, tgt.ID, optionsP)
+	tgt, err = testConf.targetOp.ModifyTarget(ctx, tgt.ID, optionsP)
 	if err != nil {
-		t.Fatalf("PatchTarget failed: %v", err)
+		t.Fatalf("ModifyTarget failed: %v", err)
 	}
 	fmt.Printf("  A Target has been patched. %+v\n", tgt)
 
@@ -184,7 +184,7 @@ func createDLPTargetTest(t *testing.T, optionsT *CreateTargetParam, optionsP *Pa
 	fmt.Println("createDeleteTargetTest Leave")
 }
 
-func createTargetMapLunTest(t *testing.T, optionsT *CreateTargetParam, optionsL *LunMapParam, optionsP *LunPatchParam) {
+func createTargetMapLunTest(t *testing.T, optionsT *CreateTargetParam, optionsL *LunMapParam, optionsP *LunParam) {
 	fmt.Println("createTargetMapLunTest Enter")
 
 	//create Target
@@ -209,7 +209,7 @@ func createTargetMapLunTest(t *testing.T, optionsT *CreateTargetParam, optionsL 
 	fmt.Printf("  listed lun: %+v\n", lunD)
 
 	//Patch target lun
-	lunTgtP, err := testConf.targetOp.PatchTargetLun(ctx, tgt.ID, lunD.ID, optionsP)
+	lunTgtP, err := testConf.targetOp.ModifyTargetLun(ctx, tgt.ID, lunD.ID, optionsP)
 	if err != nil {
 		t.Fatalf("PatchLun failed: %v", err)
 	}

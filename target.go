@@ -32,7 +32,7 @@ type CreateTargetParam struct {
 }
 
 // PATCH /rest/v2/dataTransfer/targets/_targetID
-type PatchTargetParam struct {
+type TargetParam struct {
 	Name   string  `json:"name,omitempty"`
 	Type   string  `json:"type,omitempty"`
 	Iscsis []Iscsi `json:"iscsi,omitempty"`
@@ -52,7 +52,7 @@ type LunMapParam struct {
 }
 
 // PATCH /rest/v2/dataTransfer/targets/_targetID/luns/_lunID
-type LunPatchParam struct {
+type LunParam struct {
 	Name  string `json:"name,omitempty"`
 	Hosts []Host `json:"hosts,omitempty"`
 }
@@ -151,7 +151,7 @@ func (v *TargetOp) ListTargetByID(ctx context.Context, targetID string) (*Target
 }
 
 // Patch certain target
-func (v *TargetOp) PatchTarget(ctx context.Context, targetID string, param *PatchTargetParam) (*TargetData, error) {
+func (v *TargetOp) ModifyTarget(ctx context.Context, targetID string, param *TargetParam) (*TargetData, error) {
 	rawdata, _ := json.Marshal(param)
 	req, err := v.client.NewRequest(ctx, http.MethodPatch, "/rest/v2/dataTransfer/targets/"+targetID, string(rawdata))
 	if err != nil {
@@ -270,7 +270,7 @@ func (v *TargetOp) ListTargetLun(ctx context.Context, targetID, lunID string) (*
 }
 
 //patch target lun
-func (v *TargetOp) PatchTargetLun(ctx context.Context, targetID, lunID string, param *LunPatchParam) (*LunData, error) {
+func (v *TargetOp) ModifyTargetLun(ctx context.Context, targetID, lunID string, param *LunParam) (*LunData, error) {
 	rawdata, _ := json.Marshal(param)
 	req, err := v.client.NewRequest(ctx, http.MethodPatch, "/rest/v2/dataTransfer/targets/"+targetID+"/luns/"+lunID, string(rawdata))
 	if err != nil {
