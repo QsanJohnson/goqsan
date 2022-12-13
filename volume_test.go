@@ -1,10 +1,12 @@
 package goqsan
 
 import (
+	"bytes"
 	"context"
 	b64 "encoding/base64"
 	"fmt"
 	"net/http"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -18,22 +20,12 @@ func TestVolume(t *testing.T) {
 	//TRUE := true
 	FALSE := false
 
-	//byte test for metadata
-	metabyte := []byte{48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64}
-	metabyte64 := b64.StdEncoding.EncodeToString(metabyte)
-	pmetabyte := []byte{48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101}
-
 	paramCVol := VolumeCreateOptions{
 		BlockSize:       4096,
 		IoPriority:      "HIGH",
 		BgIoPriority:    "HIGH",
 		CacheMode:       "WRITE_THROUGH",
 		EnableReadAhead: &FALSE,
-		Metadata: MetadataStruct{
-			Status:  "VALID",
-			Type:    "CSI Driver",
-			Content: metabyte64,
-		},
 	}
 
 	//patch QoS settings
@@ -74,7 +66,7 @@ func TestVolume(t *testing.T) {
 	now = time.Now()
 	timeStamp = now.Format("20060102150405")
 	volName = "gotest-vol-" + timeStamp
-	metaDataTest(t, testConf.poolId, volName, 5120, "1670571795", pmetabyte, &paramCVol)
+	metaDataTest(t, testConf.poolId, volName, 5120, &paramCVol)
 
 	//create, patch volume, delete
 	now = time.Now()
@@ -174,64 +166,75 @@ func createDeleteVolumeTest(t *testing.T, poolID, volname string, volsize uint64
 	fmt.Println("createDeleteVolumeTest Leave")
 }
 
-func metaDataTest(t *testing.T, poolID, volname string, volsize uint64, ptimestamp string, pMetabyte []byte, options *VolumeCreateOptions) {
-	fmt.Printf("createDeleteVolumeTest Enter (volSize: %d,  %+v )\n", options.TotalSize, *options)
+func metaDataTest(t *testing.T, poolID, volname string, volsize uint64, options *VolumeCreateOptions) {
+	fmt.Printf("metaDataTest Enter (volname: %s)\n", volname)
+
+	metabyte := []byte{48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64}
+	metabyte64 := b64.StdEncoding.EncodeToString(metabyte)
+
+	options.Metadata = Metadata{
+		Status:  "VALID",
+		Type:    "CSI Driver",
+		Content: metabyte64,
+	}
+	fmt.Printf("  options: %+v\n", options)
 
 	//create volume
 	vol, err := testConf.volumeOp.CreateVolume(ctx, poolID, volname, volsize, options)
 	if err != nil {
 		t.Fatalf("createVolume failed: %v", err)
 	}
-	fmt.Printf("  A volume was created. Id:%s \n", vol.ID)
+	fmt.Printf("  A volume was created. Id: %s, metabyte: %v\n", vol.ID, metabyte)
 
-	//list volume
-	v, err := testConf.volumeOp.ListVolumeByID(ctx, vol.ID)
-	if err != nil {
-		resterr, ok := err.(*RestError)
-		if ok {
-			if resterr.StatusCode == http.StatusNotFound {
-				t.Fatalf("Volume %s not found.", vol.ID)
+	_, _, metaContent, err := testConf.volumeOp.GetMetadata(ctx, vol.ID)
+	if equal := bytes.HasPrefix(metaContent, metabyte); !equal {
+		fmt.Printf("  %v vs %v \n", metabyte, metaContent)
+		t.Fatalf("metaDataTest failed. metadata content is not equal.")
+	}
+
+	// ASCII 0 ~ 255 test
+	buf := make([]byte, 22)
+	i := 0
+	for ascii := 0; ascii <= 255; ascii++ {
+		buf[i] = byte(ascii)
+		if i == len(buf)-1 {
+			i = 0
+			err = testMetaData(vol.ID, buf)
+			if err != nil {
+				t.Fatalf("metaDataTest failed. err: %v", err)
 			}
-			fmt.Printf("[ListVolumeByID] StatusCode=%d ErrResp=%+v\n", resterr.StatusCode, resterr.ErrResp)
+			buf = make([]byte, 22)
+			continue
 		}
-
-		t.Fatalf("ListVolumeByID failed: %v", err)
+		i++
 	}
-	fmt.Printf("ListVolumeByID : %+v \n", v)
-
-	//Get metadata
-	metaStatus, metaType, metaContent, err := testConf.volumeOp.GetMetadata(ctx, vol.ID)
+	err = testMetaData(vol.ID, buf)
 	if err != nil {
-		t.Fatalf("Get Metadata failed: %v", err)
+		t.Fatalf("metaDataTest failed. err: %v", err)
 	}
-	fmt.Printf(" metadata Status is :%s \n", metaStatus)
-	fmt.Printf(" metadata Type is :%s \n", metaType)
-	fmt.Printf(" metadata Content is :%b \n", metaContent)
 
-	metaStatus, metaType, metaContent, err = testConf.volumeOp.PatchMetadata(ctx, vol.ID, metaStatus, metaType, pMetabyte)
-	if err != nil {
-		t.Fatalf("Update Metadata failed: %v", err)
-	}
-	fmt.Printf(" New metadata Status is :%s \n", metaStatus)
-	fmt.Printf(" New metadata Type is :%s \n", metaType)
-	fmt.Printf(" New metadata Content is :%b \n", metaContent)
-
-	//Get metadata timestamp
-	tstamp, err := testConf.volumeOp.GetMetadataTimestamp(ctx, vol.ID)
-	if err != nil {
-		t.Fatalf("Get Timestamp failed: %v", err)
-	}
-	fmt.Printf(" metadata timestamp is :%s \n", tstamp)
-
-	//update metadata timestamp
-	tstamp, err = testConf.volumeOp.PatchMetadataTimestamp(ctx, vol.ID, ptimestamp)
+	tstamp, err := testConf.volumeOp.PatchMetadataTimestamp(ctx, vol.ID, "AUTO")
 	if err != nil {
 		t.Fatalf("Update Timestamp failed: %v", err)
 	}
-	fmt.Printf("Updated metadata timestamp is :%s \n", tstamp)
+	fmt.Printf("  Current timestamp is :%s \n", tstamp)
 
-	fmt.Printf("  Sleep 5 seconds\n")
-	time.Sleep(5 * time.Second)
+	// var sleepSec time.Duration = 5
+	var sleepSec uint64 = 5
+	fmt.Printf("  Sleep %d seconds\n", sleepSec)
+	time.Sleep(time.Duration(sleepSec) * time.Second)
+
+	tstamp2, err := testConf.volumeOp.PatchMetadataTimestamp(ctx, vol.ID, "AUTO")
+	if err != nil {
+		t.Fatalf("Update Timestamp failed: %v", err)
+	}
+	fmt.Printf("  Current timestamp is :%s\n", tstamp2)
+	t1, _ := strconv.ParseUint(tstamp, 10, 64)
+	t2, _ := strconv.ParseUint(tstamp2, 10, 64)
+	if (t2 - t1) < sleepSec {
+		t.Fatalf("Update timestamp function failed, diff time < %d sec", sleepSec)
+	}
+	fmt.Printf("  timestamp function OK\n")
 
 	//delete volume
 	fmt.Println("start delete")
@@ -241,7 +244,32 @@ func metaDataTest(t *testing.T, poolID, volname string, volsize uint64, ptimesta
 	}
 	fmt.Printf("  A volume was deleted. Id:%s\n", vol.ID)
 
-	fmt.Println("createDeleteVolumeTest Leave")
+	fmt.Println("metaDataTest Leave")
+}
+
+func testMetaData(volId string, buf []byte) error {
+	testStatus := "VALID"
+	testType := "CSI Driver"
+
+	fmt.Printf("  testMetaData with buff: %v\n", buf)
+	metaStatus, metaType, metaContent, err := testConf.volumeOp.PatchMetadata(ctx, volId, testStatus, testType, buf)
+	if err != nil {
+		return fmt.Errorf("testMetaData failed on PatchMetadata(%s, %s, %v), err: %v", testStatus, testType, buf, err)
+	}
+	metaStatus2, metaType2, metaContent2, err := testConf.volumeOp.GetMetadata(ctx, volId)
+	if testStatus != metaStatus || metaStatus != metaStatus2 {
+		return fmt.Errorf("testMetaData failed. metadata Status is not equal (%s vs %s vs %s)", testStatus, metaStatus, metaStatus2)
+	}
+	if testType != metaType || metaType != metaType2 {
+		return fmt.Errorf("testMetaData failed. metadata Type is not equal (%s vs %s vs %s)", testType, metaType, metaType2)
+	}
+	if equal, equal2 := bytes.HasPrefix(metaContent, buf), bytes.HasPrefix(metaContent2, buf); !equal || !equal2 {
+		fmt.Printf("           buf: %v\n", buf)
+		fmt.Printf("   metaContent: %v\n", metaContent)
+		fmt.Printf("  metaContent2: %v\n", metaContent2)
+		return fmt.Errorf("testMetaData failed. metadata content is not equal.")
+	}
+	return nil
 }
 
 func modifyVolumeTest(t *testing.T, poolID, volname string, volsize uint64, options *VolumeCreateOptions) {

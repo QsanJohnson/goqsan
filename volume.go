@@ -14,11 +14,12 @@ type VolumeOp struct {
 	client *AuthClient
 }
 
-// type Metadata struct {
-// 	Status  string `json:"status"`
-// 	Type    string `json:"type"`
-// 	Content string `json:"content"`
-// }
+type Metadata struct {
+	Status    string `json:"status,omitempty"`
+	Type      string `json:"type,omitempty"`
+	Content   string `json:"content,omitempty"`
+	Timestamp string `json:"timestamp,omitempty"`
+}
 
 type VolumeData struct {
 	ID                    string `json:"id"`
@@ -47,31 +48,19 @@ type VolumeData struct {
 		Wwn  string `json:"wwn"`
 		Type string `json:"type"`
 	} `json:"tags"`
-	VDMMetadata struct {
-		Status    string `json:"status"`
-		Type      string `json:"type"`
-		Content   string `json:"content"`
-		Timestamp string `json:"timestamp"`
-	} `json:"metadata"`
-}
-
-type MetadataStruct struct {
-	Status    string `json:"status,omitempty"`
-	Type      string `json:"type,omitempty"`
-	Content   string `json:"content,omitempty"`
-	Timestamp string `json:"timestamp,omitempty"`
+	Metadata Metadata `json:"metadata"`
 }
 
 type VolumeCreateOptions struct {
-	Name            string         `json:"name"`
-	TotalSize       uint64         `json:"totalSize"`
-	BlockSize       uint64         `json:"blockSize"`
-	PoolID          string         `json:"poolId"`
-	IoPriority      string         `json:"ioPriority,omitempty"`
-	BgIoPriority    string         `json:"bgIoPriority,omitempty"`
-	CacheMode       string         `json:"cacheMode,omitempty"`
-	EnableReadAhead *bool          `json:"enableReadAhead,omitempty"`
-	Metadata        MetadataStruct `json:"metadata,omitempty"`
+	Name            string   `json:"name"`
+	TotalSize       uint64   `json:"totalSize"`
+	BlockSize       uint64   `json:"blockSize"`
+	PoolID          string   `json:"poolId"`
+	IoPriority      string   `json:"ioPriority,omitempty"`
+	BgIoPriority    string   `json:"bgIoPriority,omitempty"`
+	CacheMode       string   `json:"cacheMode,omitempty"`
+	EnableReadAhead *bool    `json:"enableReadAhead,omitempty"`
+	Metadata        Metadata `json:"metadata,omitempty"`
 }
 
 //Patch /rest/v2/storage/block/volumes/_volumes
@@ -89,13 +78,13 @@ type VolumeQoSOptions struct {
 //Patch /rest/v2/storage/block/volumes/_volumes
 type VolumeModifyOptions struct {
 	VolumeQoSOptions
-	Name            string         `json:"name,omitempty"`
-	TotalSize       uint64         `json:"totalSize,omitempty"`
-	BgIoPriority    string         `json:"bgIoPriority,omitempty"`
-	CacheMode       string         `json:"cacheMode,omitempty"`
-	EnableReadAhead *bool          `json:"enableReadAhead,omitempty"`
-	Tags            Tag            `json:"tags,omitempty"`
-	Metadata        MetadataStruct `json:"metadata,omitempty"`
+	Name            string   `json:"name,omitempty"`
+	TotalSize       uint64   `json:"totalSize,omitempty"`
+	BgIoPriority    string   `json:"bgIoPriority,omitempty"`
+	CacheMode       string   `json:"cacheMode,omitempty"`
+	EnableReadAhead *bool    `json:"enableReadAhead,omitempty"`
+	Tags            Tag      `json:"tags,omitempty"`
+	Metadata        Metadata `json:"metadata,omitempty"`
 }
 
 // type VolumeModifyOptions struct {
@@ -471,14 +460,14 @@ func (v *VolumeOp) GetMetadataTimestamp(ctx context.Context, volId string) (stri
 	if err := v.client.SendRequest(ctx, req, &res); err != nil {
 		return "", err
 	}
-	return res.VDMMetadata.Timestamp, nil
+	return res.Metadata.Timestamp, nil
 }
 
 // update metadata Timestamp
 func (v *VolumeOp) PatchMetadataTimestamp(ctx context.Context, volId, timestamp string) (string, error) {
 
 	param := &VolumeModifyOptions{
-		Metadata: MetadataStruct{
+		Metadata: Metadata{
 			Timestamp: timestamp,
 		},
 	}
@@ -493,7 +482,7 @@ func (v *VolumeOp) PatchMetadataTimestamp(ctx context.Context, volId, timestamp 
 	if err := v.client.SendRequest(ctx, req, &res); err != nil {
 		return "", err
 	}
-	return res.VDMMetadata.Timestamp, nil
+	return res.Metadata.Timestamp, nil
 }
 
 // Get metadata
@@ -509,9 +498,9 @@ func (v *VolumeOp) GetMetadata(ctx context.Context, volId string) (string, strin
 		return "", "", nil, err
 	}
 
-	rawDecodedText, _ := b64.StdEncoding.DecodeString(res.VDMMetadata.Content)
+	rawDecodedText, _ := b64.StdEncoding.DecodeString(res.Metadata.Content)
 
-	return res.VDMMetadata.Status, res.VDMMetadata.Type, []byte(rawDecodedText), nil
+	return res.Metadata.Status, res.Metadata.Type, []byte(rawDecodedText), nil
 }
 
 // Update metadata
@@ -519,7 +508,7 @@ func (v *VolumeOp) PatchMetadata(ctx context.Context, volId, metastatus, metatyp
 
 	metacontent64 := b64.StdEncoding.EncodeToString(metacontent)
 	param := &VolumeModifyOptions{
-		Metadata: MetadataStruct{
+		Metadata: Metadata{
 			Status:  metastatus,
 			Type:    metatype,
 			Content: metacontent64,
@@ -537,7 +526,7 @@ func (v *VolumeOp) PatchMetadata(ctx context.Context, volId, metastatus, metatyp
 		return "", "", nil, err
 	}
 
-	rawDecodedText, _ := b64.StdEncoding.DecodeString(res.VDMMetadata.Content)
+	rawDecodedText, _ := b64.StdEncoding.DecodeString(res.Metadata.Content)
 
-	return res.VDMMetadata.Status, res.VDMMetadata.Type, []byte(rawDecodedText), nil
+	return res.Metadata.Status, res.Metadata.Type, []byte(rawDecodedText), nil
 }
