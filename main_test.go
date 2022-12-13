@@ -20,6 +20,7 @@ type testConfig struct {
 	passwd   string
 	poolId   string
 	systemOp *SystemOp
+	poolOp   *PoolOp
 	volumeOp *VolumeOp
 	targetOp *TargetOp
 }
@@ -58,6 +59,7 @@ func TestMain(m *testing.M) {
 	}
 
 	testConf.systemOp = NewSystem(testClient)
+	testConf.poolOp = NewPool(testAuthClient)
 	testConf.volumeOp = NewVolume(testAuthClient)
 	testConf.targetOp = NewTarget(testAuthClient)
 

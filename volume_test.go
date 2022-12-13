@@ -15,7 +15,7 @@ func TestVolume(t *testing.T) {
 	fmt.Println("------------TestVolume--------------")
 	ctx = context.Background()
 
-	listTest(t)
+	listVolumeTest(t)
 
 	//TRUE := true
 	FALSE := false
@@ -78,8 +78,8 @@ func TestVolume(t *testing.T) {
 
 }
 
-func listTest(t *testing.T) {
-	fmt.Println("listTest Enter")
+func listVolumeTest(t *testing.T) {
+	fmt.Println("listVolumeTest Enter")
 
 	vols, err := testConf.volumeOp.ListVolumes(ctx)
 	if err != nil {
@@ -115,14 +115,14 @@ func listTest(t *testing.T) {
 	}
 	fmt.Printf("ListVolumesByPoolID: cnt=%d\n%+v \n", len(*vols), vols)
 
-	fmt.Println("listTest Leave")
+	fmt.Println("listVolumeTest Leave")
 }
 
-func createDeleteVolumeTest(t *testing.T, poolID, volname string, volsize uint64, options *VolumeCreateOptions) {
+func createDeleteVolumeTest(t *testing.T, poolId, volname string, volsize uint64, options *VolumeCreateOptions) {
 	fmt.Printf("createDeleteVolumeTest Enter (volSize: %d,  %+v )\n", options.TotalSize, *options)
 
 	//create volume
-	vol, err := testConf.volumeOp.CreateVolume(ctx, poolID, volname, volsize, options)
+	vol, err := testConf.volumeOp.CreateVolume(ctx, poolId, volname, volsize, options)
 	if err != nil {
 		t.Fatalf("createVolume failed: %v", err)
 	}
@@ -157,7 +157,7 @@ func createDeleteVolumeTest(t *testing.T, poolID, volname string, volsize uint64
 	fmt.Println("createDeleteVolumeTest Leave")
 }
 
-func metaDataTest(t *testing.T, poolID, volname string, volsize uint64, options *VolumeCreateOptions) {
+func metaDataTest(t *testing.T, poolId, volname string, volsize uint64, options *VolumeCreateOptions) {
 	fmt.Printf("metaDataTest Enter (volname: %s)\n", volname)
 
 	metabyte := []byte{48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64}
@@ -171,7 +171,7 @@ func metaDataTest(t *testing.T, poolID, volname string, volsize uint64, options 
 	fmt.Printf("  options: %+v\n", options)
 
 	//create volume
-	vol, err := testConf.volumeOp.CreateVolume(ctx, poolID, volname, volsize, options)
+	vol, err := testConf.volumeOp.CreateVolume(ctx, poolId, volname, volsize, options)
 	if err != nil {
 		t.Fatalf("createVolume failed: %v", err)
 	}
@@ -263,11 +263,11 @@ func testMetaData(volId string, buf []byte) error {
 	return nil
 }
 
-func modifyVolumeTest(t *testing.T, poolID, volname string, volsize uint64, options *VolumeCreateOptions) {
+func modifyVolumeTest(t *testing.T, poolId, volname string, volsize uint64, options *VolumeCreateOptions) {
 	fmt.Println("ModifyVolumeTest Enter")
 
 	// create volume
-	vol, err := testConf.volumeOp.CreateVolume(ctx, poolID, volname, volsize, options)
+	vol, err := testConf.volumeOp.CreateVolume(ctx, poolId, volname, volsize, options)
 	if err != nil {
 		t.Fatalf("createVolume failed: %v", err)
 	}
@@ -338,11 +338,11 @@ func modifyVolumeTest(t *testing.T, poolID, volname string, volsize uint64, opti
 	fmt.Println("ModifyVolumeTest Leave")
 }
 
-func modifyQoSTest(t *testing.T, poolID, volname string, volsize uint64, optionsV *VolumeCreateOptions, optionsQ *VolumeModifyOptions) {
+func modifyQoSTest(t *testing.T, poolId, volname string, volsize uint64, optionsV *VolumeCreateOptions, optionsQ *VolumeModifyOptions) {
 	fmt.Println("ModifyQoSTest Enter")
 
 	// create volume
-	vol, err := testConf.volumeOp.CreateVolume(ctx, poolID, volname, volsize, optionsV)
+	vol, err := testConf.volumeOp.CreateVolume(ctx, poolId, volname, volsize, optionsV)
 	if err != nil {
 		t.Fatalf("createVolume failed: %v", err)
 	}
@@ -418,11 +418,11 @@ func qosTest(t *testing.T, qosEnable bool, qosRule string) {
 	fmt.Println("QoSTest Leave")
 }
 
-func snapshotTest(t *testing.T, poolID, volname string, volsize uint64, optionsV *VolumeCreateOptions) {
+func snapshotTest(t *testing.T, poolId, volname string, volsize uint64, optionsV *VolumeCreateOptions) {
 	fmt.Printf("snapshotTest Enter \n")
 
 	//create volume
-	vol, err := testConf.volumeOp.CreateVolume(ctx, poolID, volname, volsize, optionsV)
+	vol, err := testConf.volumeOp.CreateVolume(ctx, poolId, volname, volsize, optionsV)
 	if err != nil {
 		t.Fatalf("createVolume failed: %v", err)
 	}

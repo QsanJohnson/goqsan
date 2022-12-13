@@ -181,9 +181,9 @@ func (v *VolumeOp) ListVolumeByID(ctx context.Context, volId string) (*VolumeDat
 }
 
 // list volumes under given PoolID
-func (v *VolumeOp) ListVolumesByPoolID(ctx context.Context, poolID string) (*[]VolumeData, error) {
+func (v *VolumeOp) ListVolumesByPoolID(ctx context.Context, poolId string) (*[]VolumeData, error) {
 
-	req, err := v.client.NewRequest(ctx, http.MethodGet, "/rest/v2/storage/block/volumes?q=poolId='"+poolID+"'", nil)
+	req, err := v.client.NewRequest(ctx, http.MethodGet, "/rest/v2/storage/block/volumes?q=poolId='"+poolId+"'", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -196,9 +196,9 @@ func (v *VolumeOp) ListVolumesByPoolID(ctx context.Context, poolID string) (*[]V
 }
 
 // CreateVolume create a volume on a storage container
-func (v *VolumeOp) CreateVolume(ctx context.Context, poolID, volname string, volsize uint64, options *VolumeCreateOptions) (*VolumeData, error) {
+func (v *VolumeOp) CreateVolume(ctx context.Context, poolId, volname string, volsize uint64, options *VolumeCreateOptions) (*VolumeData, error) {
 
-	options.PoolID = poolID
+	options.PoolID = poolId
 	options.Name = volname
 	options.TotalSize = volsize
 
