@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 )
 
 // TargetOp handles target related methods of the QSAN storage.
@@ -212,15 +211,15 @@ func (v *TargetOp) MapLun(ctx context.Context, targetID, volID string, param *Lu
 
 	res := LunData{}
 	if err := v.client.SendRequest(ctx, req, &res); err != nil {
-		resterr, ok := err.(*RestError)
-		for retries := 0; ok && resterr.StatusCode == 429 && retries < 10; retries++ {
-			// This is a workaround for SAN attach LUN issue.
-			time.Sleep(1 * time.Second)
-			if err := v.client.SendRequest(ctx, req, &res); err == nil {
-				return &res, nil
-			}
-			resterr, ok = err.(*RestError)
-		}
+		// resterr, ok := err.(*RestError)
+		// for retries := 0; ok && resterr.StatusCode == 429 && retries < 10; retries++ {
+		// 	// This is a workaround for SAN attach LUN issue.
+		// 	time.Sleep(1 * time.Second)
+		// 	if err := v.client.SendRequest(ctx, req, &res); err == nil {
+		// 		return &res, nil
+		// 	}
+		// 	resterr, ok = err.(*RestError)
+		// }
 		return nil, err
 	}
 	return &res, nil
