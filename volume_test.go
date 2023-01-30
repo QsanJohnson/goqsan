@@ -441,7 +441,7 @@ func snapshotTest(t *testing.T, poolId, volname string, volsize uint64, optionsV
 	//enable snapshot center and assign space
 	//patch volume snapshot settings
 	optionsSP := &SnapshotMutableSetting{
-		TotalSize: 20480,
+		TotalSize: 81920,
 	}
 	snapPat, err := testConf.volumeOp.SetSnapshotSetting(ctx, vol.ID, optionsSP)
 	if err != nil {

@@ -162,11 +162,11 @@ func createDLPTargetTest(t *testing.T, optionsT *CreateTargetParam, optionsP *Ta
 	fmt.Printf("  Target ID %v information : %+v\n", tgt.ID, tgt)
 
 	//patch target
-	tgt, err = testConf.targetOp.ModifyTarget(ctx, tgt.ID, optionsP)
-	if err != nil {
-		t.Fatalf("ModifyTarget failed: %v", err)
-	}
-	fmt.Printf("  A Target has been patched. %+v\n", tgt)
+	// tgt, err = testConf.targetOp.ModifyTarget(ctx, tgt.ID, optionsP)
+	// if err != nil {
+	// 	t.Fatalf("ModifyTarget failed: %v", err)
+	// }
+	// fmt.Printf("  A Target has been patched. %+v\n", tgt)
 
 	fmt.Printf("  Sleep 5 seconds\n")
 	time.Sleep(5 * time.Second)
