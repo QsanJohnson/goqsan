@@ -38,9 +38,9 @@ type ClientOptions struct {
 // QSAN client with authentication
 type AuthClient struct {
 	Client
-	user, passwd string
-	accessToken  string
-	refreshToken string
+	user, passwd, scopes string
+	accessToken          string
+	refreshToken         string
 }
 
 // For authentication
@@ -175,7 +175,7 @@ func (c *AuthClient) SendRequest(ctx context.Context, req *http.Request, v inter
 		} else {
 			// When refresh token expired, renew a new access token and refresh token.
 			glog.V(2).Infof("[AuthSendRequest] renew new access token and refresh token.\n")
-			res, err := c.login(ctx, c.user, c.passwd)
+			res, err := c.login(ctx, c.user, c.passwd, c.scopes)
 			if err != nil {
 				resterr.Err = fmt.Errorf("renew access token failed: %v\n", err)
 				return &resterr
@@ -265,11 +265,12 @@ func (c *Client) doSendRequest(ctx context.Context, req *http.Request, v interfa
 	return res, nil
 }
 
-func (c *Client) login(ctx context.Context, user string, passwd string) (*AuthRes, error) {
+func (c *Client) login(ctx context.Context, user, passwd, scopes string) (*AuthRes, error) {
 	params := url.Values{}
 	params.Add("user", user)
 	params.Add("password", passwd)
 	params.Add("offlineAccess", "true")
+	params.Add("scopes", scopes)
 
 	req, err := c.NewRequest(ctx, http.MethodPost, "/auth/get", params)
 	if err != nil {
@@ -302,8 +303,8 @@ func (c *AuthClient) genAccessToken(ctx context.Context, t string) (*AuthRes, er
 	return &res, nil
 }
 
-func (c *Client) GetAuthClient(ctx context.Context, user string, passwd string) (*AuthClient, error) {
-	res, err := c.login(ctx, user, passwd)
+func (c *Client) GetAuthClient(ctx context.Context, user, passwd, scopes string) (*AuthClient, error) {
+	res, err := c.login(ctx, user, passwd, scopes)
 	if err != nil {
 		return nil, fmt.Errorf("login failed: %v\n", err)
 	}
