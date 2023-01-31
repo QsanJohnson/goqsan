@@ -5,6 +5,7 @@ package goqsan
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -104,6 +105,15 @@ func NewClient(ip string, opts ClientOptions) *Client {
 	}
 
 	return client
+}
+
+func GetCSIScopes(passwd string) string {
+	key := make([]byte, 32) //  32 bytes for AES-256
+	copy(key[:], "qsanscope1234")
+	enc := AESECBEncrypt([]byte(passwd), key)
+	enc64 := base64.StdEncoding.EncodeToString(enc)
+
+	return fmt.Sprintf("%s|%s", "csi.readwrite", enc64)
 }
 
 // If body format is url.Values, then body data will be sent using x-www-form-urlencoded format.

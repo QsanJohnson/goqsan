@@ -3,7 +3,6 @@ package goqsan
 import (
 	"bufio"
 	"context"
-	"encoding/base64"
 	"errors"
 	"flag"
 	"fmt"
@@ -54,7 +53,7 @@ func TestMain(m *testing.M) {
 	fmt.Printf("TestConf: %s %s/%s\n", testConf.ip, testConf.user, testConf.passwd)
 
 	testClient := getTestClient(testConf.ip)
-	testAuthClient, err := testClient.GetAuthClient(ctx, testConf.user, testConf.passwd, getCSIScopes(testConf.passwd))
+	testAuthClient, err := testClient.GetAuthClient(ctx, testConf.user, testConf.passwd, GetCSIScopes(testConf.passwd))
 	if err != nil {
 		panic(fmt.Sprintf("GetAuthClient failed: %v \n", err))
 	}
@@ -108,13 +107,4 @@ func readTestConf(filename string) (map[string]string, error) {
 		}
 	}
 	return configPropertiesMap, nil
-}
-
-func getCSIScopes(passwd string) string {
-	key := make([]byte, 32) //  32 bytes for AES-256
-	copy(key[:], "qsanscope1234")
-	enc := AESECBEncrypt([]byte(passwd), key)
-	enc64 := base64.StdEncoding.EncodeToString(enc)
-
-	return fmt.Sprintf("%s|%s", "csi.readwrite", enc64)
 }
