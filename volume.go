@@ -109,6 +109,8 @@ type SnaphshotSetting struct {
 		Policy   string `json:"policy"`
 	} `json:"snapshotMaxPolicy"`
 	SnapshotMutableSetting
+	AvailableSize int `json:"availableSize"`
+	MinimumSize   int `json:"minimumSize"`
 }
 
 // Patch /rest/v2/backup/snapshot/targets/_volumeID/snapshots/_snapshotID

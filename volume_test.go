@@ -5,6 +5,7 @@ import (
 	"context"
 	b64 "encoding/base64"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"testing"
@@ -436,12 +437,14 @@ func snapshotTest(t *testing.T, poolId, volname string, volsize uint64, optionsV
 	if err != nil {
 		t.Fatalf("Get volume snapshot setting failed: %v", err)
 	}
-	fmt.Printf("Volume snapshot settings: %v \n", snapSet)
+	fmt.Printf("Volume snapshot settings: %+v \n", snapSet)
 
 	//enable snapshot center and assign space
 	//patch volume snapshot settings
+	fMinSnap := math.Ceil(float64(snapSet.MinimumSize) / 1024)
 	optionsSP := &SnapshotMutableSetting{
-		TotalSize: 81920,
+		// TotalSize: 81920,
+		TotalSize: int(fMinSnap) << 10,
 	}
 	snapPat, err := testConf.volumeOp.SetSnapshotSetting(ctx, vol.ID, optionsSP)
 	if err != nil {
