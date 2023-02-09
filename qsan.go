@@ -62,6 +62,7 @@ type errorResponse struct {
 }
 
 type RestError struct {
+	ReqMethod  string
 	ReqUrl     string
 	StatusCode int
 	ErrResp    errorResponse
@@ -69,7 +70,7 @@ type RestError struct {
 }
 
 func (r *RestError) Error() string {
-	return fmt.Sprintf("[%s] status %d: %v (%d)", r.ReqUrl, r.StatusCode, r.ErrResp.Error.Message, r.ErrResp.Error.Code)
+	return fmt.Sprintf("[%s %s] status %d: %v (%d)", r.ReqMethod, r.ReqUrl, r.StatusCode, r.ErrResp.Error.Message, r.ErrResp.Error.Code)
 }
 
 // NewClient returns QSAN client with given URL
@@ -157,7 +158,7 @@ func (c *Client) NewRequest(ctx context.Context, method, urlPath string, body in
 }
 
 func (c *AuthClient) SendRequest(ctx context.Context, req *http.Request, v interface{}) error {
-	resterr := RestError{ReqUrl: req.Host + req.URL.Path}
+	resterr := RestError{ReqMethod: req.Method, ReqUrl: req.Host + req.URL.Path}
 	res, err := c.doSendRequest(ctx, req, v)
 	if err != nil {
 		resterr.Err = err
