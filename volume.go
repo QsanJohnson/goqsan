@@ -29,6 +29,7 @@ type VolumeData struct {
 	TargetID              string `json:"targetId"`
 	Online                bool   `json:"online"`
 	State                 string `json:"state"`
+	Progress              int    `json:"progress"`
 	Health                string `json:"health"`
 	Provision             string `json:"provision"`
 	TotalSize             uint64 `json:"totalSize"`
@@ -137,7 +138,7 @@ type SnaphshotOptions struct {
 type SnaphshotData struct {
 	ID         string     `json:"id"`
 	Name       string     `json:"name"`
-	CreateTime string     `json:"createTime"`
+	CreateTime int64      `json:"createTime"`
 	UsedSize   uint64     `json:"usedSize"`
 	Expose     SnapExpose `json:"expose"`
 	Trash      SnapTrash  `json:"trash"`
@@ -509,4 +510,23 @@ func (v *VolumeOp) SetMetadata(ctx context.Context, volId, metastatus, metatype 
 	rawDecodedText, _ := b64.StdEncoding.DecodeString(res.Metadata.Content)
 
 	return res.Metadata.Status, res.Metadata.Type, []byte(rawDecodedText), nil
+}
+
+func (v *VolumeOp) Clone(ctx context.Context, volId, newVolName, poolId string) (*VolumeData, error) {
+	m := map[string]string{
+		"volumeName": newVolName,
+		"poolID":     poolId,
+	}
+	rawdata, _ := json.Marshal(m)
+	req, err := v.client.NewRequest(ctx, http.MethodPost, "/rest/v2/storage/block/volumes/"+volId+"/clone", string(rawdata))
+	if err != nil {
+		return nil, err
+	}
+
+	res := VolumeData{}
+	if err := v.client.SendRequest(ctx, req, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
 }

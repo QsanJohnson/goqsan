@@ -51,19 +51,19 @@ func TestVolume(t *testing.T) {
 	//create, list, delete
 	now := time.Now()
 	timeStamp := now.Format("20060102150405")
-	volName := "gotest-vol-" + timeStamp
+	volName := "gt-vol-" + timeStamp
 	createDeleteVolumeTest(t, testConf.poolId, volName, 5120, &paramCVol)
 
 	//create, list, get metadata, patch metadata, get timestamp, list timestamp, delete
 	now = time.Now()
 	timeStamp = now.Format("20060102150405")
-	volName = "gotest-vol-" + timeStamp
+	volName = "gt-vol-" + timeStamp
 	metaDataTest(t, testConf.poolId, volName, 5120, &paramCVol)
 
 	//create, patch volume, delete
 	now = time.Now()
 	timeStamp = now.Format("20060102150405")
-	volName = "gotest-vol-" + timeStamp
+	volName = "gt-vol-" + timeStamp
 	modifyVolumeTest(t, testConf.poolId, volName, 10240, &paramCVol)
 
 	modifyQoSTest(t, testConf.poolId, volName, 10240, &paramCVol, &paramPVolQoS)
@@ -74,8 +74,13 @@ func TestVolume(t *testing.T) {
 
 	now = time.Now()
 	timeStamp = now.Format("20060102150405")
-	volName = "gotest-vol-" + timeStamp
+	volName = "gt-snapvol-" + timeStamp
 	snapshotTest(t, testConf.poolId, volName, 10240, &paramCVol)
+
+	now = time.Now()
+	timeStamp = now.Format("20060102150405")
+	volName = "gt-clonevol-" + timeStamp
+	cloneTest(t, testConf.poolId, volName, 10240, &paramCVol)
 
 }
 
@@ -146,6 +151,16 @@ func createDeleteVolumeTest(t *testing.T, poolId, volname string, volsize uint64
 
 	fmt.Printf("  Sleep 5 seconds\n")
 	time.Sleep(5 * time.Second)
+
+	fmt.Println("Test DeleteVolume with non-existent ID")
+	if err = testConf.volumeOp.DeleteVolume(ctx, "11111111"); err != nil {
+		resterr, ok := err.(*RestError)
+		if ok && resterr.StatusCode == 400 && resterr.ErrResp.Error.Code == 10300 {
+			// Pass
+		} else {
+			t.Fatalf("DeleteVolume with non-existent ID return invalid error code. %v", err)
+		}
+	}
 
 	//delete volume
 	fmt.Println("start delete")
@@ -429,9 +444,6 @@ func snapshotTest(t *testing.T, poolId, volname string, volsize uint64, optionsV
 	}
 	fmt.Printf("  A volume was created. Id:%s \n", vol.ID)
 
-	fmt.Printf("  Sleep 10 seconds\n")
-	time.Sleep(10 * time.Second)
-
 	//get volume snapshot settings
 	snapSet, err := testConf.volumeOp.GetSnapshotSetting(ctx, vol.ID)
 	if err != nil {
@@ -446,9 +458,20 @@ func snapshotTest(t *testing.T, poolId, volname string, volsize uint64, optionsV
 		// TotalSize: 81920,
 		TotalSize: int(fMinSnap) << 10,
 	}
+
+	retries := 0
+RETRY:
 	snapPat, err := testConf.volumeOp.SetSnapshotSetting(ctx, vol.ID, optionsSP)
 	if err != nil {
-		t.Fatalf("Enable snapshot center failed: %v", err)
+		resterr, ok := err.(*RestError)
+		if ok && resterr.StatusCode == 409 && resterr.ErrResp.Error.Code == 12002 && retries < 10 {
+			fmt.Println("Volume is not ready to set snapshot space now, sleep 3 sec then try again...")
+			time.Sleep(3 * time.Second)
+			retries++
+			goto RETRY
+		} else {
+			t.Fatalf("Enable snapshot center failed: %v", err)
+		}
 	}
 	fmt.Printf("Snapshot center enabled, with space: %d \n", snapPat.TotalSize)
 
@@ -489,6 +512,28 @@ func snapshotTest(t *testing.T, poolId, volname string, volsize uint64, optionsV
 
 	fmt.Printf("  Sleep 5 seconds\n")
 	time.Sleep(5 * time.Second)
+
+	fmt.Println("Test DeleteSnapshot with non-existent volume ID")
+	if err = testConf.volumeOp.DeleteSnapshot(ctx, "11111111", snapC2.ID); err != nil {
+		fmt.Printf("err: %v \n", err)
+		resterr, ok := err.(*RestError)
+		if ok && resterr.StatusCode == 400 && resterr.ErrResp.Error.Code == 10300 {
+			// Pass
+		} else {
+			t.Fatalf("DeleteSnapshot with non-existent volume ID return invalid error code. %v", err)
+		}
+	}
+
+	fmt.Println("Test DeleteSnapshot with non-existent snapshot ID")
+	if err = testConf.volumeOp.DeleteSnapshot(ctx, vol.ID, "11111111"); err != nil {
+		fmt.Printf("err: %v \n", err)
+		resterr, ok := err.(*RestError)
+		if ok && resterr.StatusCode == 400 && resterr.ErrResp.Error.Code == 13502 {
+			// Pass
+		} else {
+			t.Fatalf("DeleteSnapshot with non-existent snapshot ID return invalid error code. %v", err)
+		}
+	}
 
 	//Rollback to the first snapshot
 	err = testConf.volumeOp.RollbackSnapshot(ctx, vol.ID, snapC.ID)
@@ -538,4 +583,52 @@ func snapshotTest(t *testing.T, poolId, volname string, volsize uint64, optionsV
 	fmt.Printf("  A volume was deleted. Id:%s\n", vol.ID)
 
 	fmt.Println("snapshotTest Leave")
+}
+
+func cloneTest(t *testing.T, poolId, volname string, volsize uint64, optionsV *VolumeCreateOptions) {
+	fmt.Printf("cloneTest Enter \n")
+
+	//create volume
+	vol, err := testConf.volumeOp.CreateVolume(ctx, poolId, volname, volsize, optionsV)
+	if err != nil {
+		t.Fatalf("createVolume failed: %v", err)
+	}
+	fmt.Printf("  A volume was created. Id:%s, State: %s (%d %%)\n", vol.ID, vol.State, vol.Progress)
+
+	fmt.Printf("  Sleep 5 seconds\n")
+	time.Sleep(5 * time.Second)
+
+	//clone volume
+	newVolName := volname + "-2"
+	clonedVol, err := testConf.volumeOp.Clone(ctx, vol.ID, newVolName, vol.PoolID)
+	if err != nil {
+		t.Fatalf("clone volume failed: %v", err)
+	}
+	fmt.Printf("  A new volume was cloned. Volume Id:%s, State: %s (%d %%)\n", clonedVol.ID, clonedVol.State, clonedVol.Progress)
+
+	if clonedVol, err = testConf.volumeOp.ListVolumeByID(ctx, clonedVol.ID); err != nil {
+		t.Fatalf("Get cloned volume failed: %v", err)
+	} else {
+		fmt.Printf("  Current clone volume(%s) State: %s (%d %%)\n", clonedVol.ID, clonedVol.State, clonedVol.Progress)
+	}
+
+	fmt.Printf("  Sleep 5 seconds\n")
+	time.Sleep(5 * time.Second)
+
+	//start delete volume
+	fmt.Println("delete source volume")
+	err = testConf.volumeOp.DeleteVolume(ctx, vol.ID)
+	if err != nil {
+		t.Fatalf("DeleteVolume failed: %v", err)
+	}
+	fmt.Printf("  A source volume was deleted. Id:%s\n", vol.ID)
+
+	fmt.Println("delete cloned volume")
+	err = testConf.volumeOp.DeleteVolume(ctx, clonedVol.ID)
+	if err != nil {
+		t.Fatalf("DeleteVolume failed: %v", err)
+	}
+	fmt.Printf("  A cloned volume was deleted. Id:%s\n", clonedVol.ID)
+
+	fmt.Println("cloneTest Leave")
 }

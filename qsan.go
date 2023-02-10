@@ -171,7 +171,7 @@ func (c *AuthClient) SendRequest(ctx context.Context, req *http.Request, v inter
 
 		if req.URL.Path != "/auth/refresh" {
 			// When the existing access token expired, generate a new access token.
-			glog.V(2).Infof("[AuthSendRequest] generate new access token. (%s%s)\n", req.Host, req.URL.Path)
+			glog.V(2).Infof("[AuthSendRequest] generate new access token. (%s %s%s)\n", req.Method, req.Host, req.URL.Path)
 			authRes, err := c.genAccessToken(ctx, c.refreshToken)
 			if err != nil {
 				resterr.Err = fmt.Errorf("genAccessToken failed: %v\n", err)
@@ -181,7 +181,7 @@ func (c *AuthClient) SendRequest(ctx context.Context, req *http.Request, v inter
 			// Update new access token then send request again
 			c.accessToken = authRes.AccessToken
 			c.apiKey = authRes.AccessToken
-			glog.V(2).Infof("[AuthSendRequest] SendRequest again (%s%s)\n", req.Host, req.URL.Path)
+			glog.V(2).Infof("[AuthSendRequest] SendRequest again (%s %s%s)\n", req.Method, req.Host, req.URL.Path)
 			res, err = c.doSendRequest(ctx, req, v)
 		} else {
 			// When refresh token expired, renew a new access token and refresh token.
@@ -201,7 +201,7 @@ func (c *AuthClient) SendRequest(ctx context.Context, req *http.Request, v inter
 			if ok {
 				*authRes = *res
 			} else {
-				glog.Errorf("[AuthSendRequest] Should no be here. (%s%s)\n", req.Host, req.URL.Path)
+				glog.Errorf("[AuthSendRequest] Should no be here. (%s %s%s)\n", req.Method, req.Host, req.URL.Path)
 			}
 
 			return nil
@@ -214,18 +214,18 @@ func (c *AuthClient) SendRequest(ctx context.Context, req *http.Request, v inter
 	if res.StatusCode != http.StatusOK {
 		errRes := errorResponse{}
 		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
-			glog.Warningf("[AuthSendRequest] %s%s, StatusCode(%d) errRes: %+v\n", req.Host, req.URL.Path, res.StatusCode, errRes)
+			glog.Warningf("[AuthSendRequest] %s %s%s, StatusCode(%d) errRes: %+v\n", req.Method, req.Host, req.URL.Path, res.StatusCode, errRes)
 			resterr.ErrResp = errRes
 			return &resterr
 		} else {
-			glog.Warningf("[AuthSendRequest] %s%s, StatusCode(%d) err: %+v\n", req.Host, req.URL.Path, res.StatusCode, err)
+			glog.Warningf("[AuthSendRequest] %s %s%s, StatusCode(%d) err: %+v\n", req.Method, req.Host, req.URL.Path, res.StatusCode, err)
 			resterr.Err = fmt.Errorf("unknown error, status code: %d", res.StatusCode)
 			return &resterr
 		}
 	}
 
 	if err = json.NewDecoder(res.Body).Decode(v); err != nil {
-		glog.Warningf("[AuthSendRequest] %s%s, err: %+v\n", req.Host, req.URL.Path, err)
+		glog.Warningf("[AuthSendRequest] %s %s%s, err: %+v\n", req.Method, req.Host, req.URL.Path, err)
 		resterr.Err = err
 		return &resterr
 	}
