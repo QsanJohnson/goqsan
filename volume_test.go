@@ -475,46 +475,57 @@ RETRY:
 	}
 	fmt.Printf("Snapshot center enabled, with space: %d \n", snapPat.TotalSize)
 
-	fmt.Printf("  Sleep 5 seconds\n")
-	time.Sleep(5 * time.Second)
-
-	//create volume snapshot
+	// Test CreateSnapshot, GetSnapshot then DeleteSnapshot
 	snapName := "kyle_snap1"
-	snapC, err := testConf.volumeOp.CreateSnapshot(ctx, vol.ID, snapName) //need to be changed to body input
+	snapC, err := testConf.volumeOp.CreateSnapshot(ctx, vol.ID, snapName)
 	if err != nil {
-		t.Fatalf("createVolume snapshot failed: %v", err)
+		t.Fatalf("CreateSnapshot failed: %v", err)
 	}
-	fmt.Printf("  A volume snapshot was created. Snapshot Id:%s \n", snapC.ID)
+	fmt.Printf("  A volume snapshot was created. SnapshotId(%s) SnapshotName(%s)\n", snapC.ID, snapC.Name)
 
-	//get volume snapshot lists
-	snaplist, err := testConf.volumeOp.ListSnapshots(ctx, vol.ID)
-	if err != nil {
-		t.Fatalf("Get volume snapshot lists failed: %v", err)
+	if _, err = testConf.volumeOp.GetSnapshot(ctx, vol.ID, snapC.ID); err != nil {
+		t.Fatalf("Created snapshot doesn't exist. err: %v", err)
 	}
-	fmt.Printf("Volume snapshot lists: %v \n", snaplist)
 
-	fmt.Printf("  Sleep 3 seconds\n")
-	time.Sleep(3 * time.Second)
+	if err = testConf.volumeOp.DeleteSnapshot(ctx, vol.ID, snapC.ID); err != nil {
+		t.Fatalf("DeleteSnapshot failed: %v", err)
+	}
 
-	//get certain volume snapshot lists
+	// CreateSnapshot again for following test
 	snapName = "kyle_snap2"
-	snapC2, err := testConf.volumeOp.CreateSnapshot(ctx, vol.ID, snapName) //need to be changed to body input
+	snapC, err = testConf.volumeOp.CreateSnapshot(ctx, vol.ID, snapName)
 	if err != nil {
-		t.Fatalf("createVolume snapshot failed: %v", err)
+		t.Fatalf("Second create snapshot failed: %v", err)
 	}
-	fmt.Printf("  A volume snapshot was created. Snapshot Id:%s \n", snapC2.ID)
+	fmt.Printf("  A volume snapshot2 was created. SnapshotId(%s) SnapshotName(%s)\n", snapC.ID, snapC.Name)
 
-	snaplist2, err := testConf.volumeOp.GetSnapshot(ctx, vol.ID, snapC2.ID)
-	if err != nil {
-		t.Fatalf("Get certain volume snapshot list failed: %v", err)
+	fmt.Printf("Test CreateSnapshot with existence name %s\n", snapC.Name)
+	if _, err := testConf.volumeOp.CreateSnapshot(ctx, vol.ID, snapC.Name); err != nil {
+		resterr, ok := err.(*RestError)
+		if ok && resterr.StatusCode == 429 && resterr.ErrResp.Error.Code == 13514 {
+			// Pass
+		} else {
+			t.Fatalf("Error code mismatch when creating snapshot with existence name. err: %v", err)
+		}
+	} else {
+		t.Fatalf("It should fail when creating snapshot with existence name.")
 	}
-	fmt.Printf("snapshot ID: %s 's list: %v \n", snapC2.ID, snaplist2)
 
-	fmt.Printf("  Sleep 5 seconds\n")
-	time.Sleep(5 * time.Second)
+	snapName = "kyle_snap2222222222222222222222222222222"
+	fmt.Printf("Test CreateSnapshot with long name %s\n", snapName)
+	if _, err := testConf.volumeOp.CreateSnapshot(ctx, vol.ID, snapName); err != nil {
+		resterr, ok := err.(*RestError)
+		if ok && resterr.StatusCode == 400 && resterr.ErrResp.Error.Code == 13502 {
+			// Pass
+		} else {
+			t.Fatalf("Error code mismatch when creating snapshot with long name. err: %v", err)
+		}
+	} else {
+		t.Fatalf("It should fail when creating snapshot with long name.")
+	}
 
 	fmt.Println("Test DeleteSnapshot with non-existent volume ID")
-	if err = testConf.volumeOp.DeleteSnapshot(ctx, "11111111", snapC2.ID); err != nil {
+	if err = testConf.volumeOp.DeleteSnapshot(ctx, "11111111", snapC.ID); err != nil {
 		fmt.Printf("err: %v \n", err)
 		resterr, ok := err.(*RestError)
 		if ok && resterr.StatusCode == 400 && resterr.ErrResp.Error.Code == 10300 {
@@ -541,7 +552,7 @@ RETRY:
 		t.Fatalf("Rollback to first snapshot failed: %v", err)
 	}
 	//check if rollback to first snapshot will delete the rest snapshot
-	snaplist, err = testConf.volumeOp.ListSnapshots(ctx, vol.ID)
+	snaplist, err := testConf.volumeOp.ListSnapshots(ctx, vol.ID)
 	if err != nil {
 		t.Fatalf("Get volume snapshot lists failed: %v", err)
 	}

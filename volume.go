@@ -318,7 +318,10 @@ func (v *VolumeOp) SetSnapshotSetting(ctx context.Context, volId string, options
 // POST /rest/v2/backup/snapshot/targets/_volumeID/snapshots/_snapshotName
 func (v *VolumeOp) CreateSnapshot(ctx context.Context, volId, snapeName string) (*SnaphshotData, error) {
 
-	rawdata, _ := json.Marshal(snapeName)
+	m := map[string]string{
+		"name": snapeName,
+	}
+	rawdata, _ := json.Marshal(m)
 	req, err := v.client.NewRequest(ctx, http.MethodPost, "/rest/v2/backup/snapshot/targets/"+volId+"/snapshots", string(rawdata))
 	if err != nil {
 		return nil, err
