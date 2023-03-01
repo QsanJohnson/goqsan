@@ -330,6 +330,7 @@ func (c *Client) GetAuthClient(ctx context.Context, user, passwd, scopes string)
 		},
 		user:         user,
 		passwd:       passwd,
+		scopes:       scopes,
 		accessToken:  res.AccessToken,
 		refreshToken: res.RefreshToken,
 	}, nil
